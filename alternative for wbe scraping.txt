@@ -1,0 +1,4 @@
+insted of scraping https://www.forexfactory.com/calendar/more/1
+
+we can just send a post request and get the data difrectly:
+https://www.forexfactory.com/calendar/more/1

@@ -1,0 +1,15 @@
+# Web framework
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+
+# Browser automation
+playwright==1.44.0
+
+# Data validation
+pydantic==2.7.1
+
+# Date parsing utility
+python-dateutil==2.9.0
+
+# HTTP client (used by uvicorn standard extras + healthcheck)
+httpx==0.27.0
