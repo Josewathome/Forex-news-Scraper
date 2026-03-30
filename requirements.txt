@@ -1,15 +1,44 @@
-# Web framework
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.13.0
+certifi==2026.2.25
+click==8.3.1
+dnspython==2.8.0
+email-validator==2.3.0
+exceptiongroup==1.3.1
 fastapi==0.111.0
-uvicorn[standard]==0.29.0
-
-# Browser automation
-playwright==1.44.0
-
-# Data validation
-pydantic==2.7.1
-
-# Date parsing utility
-python-dateutil==2.9.0
-
-# HTTP client (used by uvicorn standard extras + healthcheck)
+fastapi-cli==0.0.24
+greenlet==3.0.3
+h11==0.16.0
+httpcore==1.0.9
+httptools==0.7.1
 httpx==0.27.0
+idna==3.11
+Jinja2==3.1.6
+markdown-it-py==4.0.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+orjson==3.11.7
+playwright==1.44.0
+pydantic==2.7.1
+pydantic_core==2.18.2
+pyee==11.1.0
+Pygments==2.20.0
+python-dateutil==2.9.0
+python-dotenv==1.2.2
+python-multipart==0.0.22
+PyYAML==6.0.3
+rich==14.3.3
+rich-toolkit==0.19.7
+shellingham==1.5.4
+six==1.17.0
+sniffio==1.3.1
+starlette==0.37.2
+tomli==2.4.1
+typer==0.24.1
+typing_extensions==4.15.0
+ujson==5.12.0
+uvicorn==0.29.0
+uvloop==0.22.1
+watchfiles==1.1.1
+websockets==16.0
