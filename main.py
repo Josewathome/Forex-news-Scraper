@@ -1,4 +1,3 @@
-
 import asyncio
 import logging
 import logging.config
@@ -12,6 +11,7 @@ from browser_manager import BrowserManager
 from cache_manager import CacheManager
 from routes import forexfactory as ff_routes
 from routes import myfxbook    as mfb_routes
+from routes import brokerguide as bg_routes
 
 # ---- Logging ----------------------------------------------------------------
 
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     app.state.browser_manager = bm
 
     await bm.start()
-    logger.info("Browser manager ready.")
+    logger.info("Browser manager ready (FF + MFB calendar + MFB broker guide).")
 
     # Background cache-purge task (runs every 5 min)
     async def _purge_loop():
@@ -69,14 +69,20 @@ async def lifespan(app: FastAPI):
 # ---- FastAPI app ------------------------------------------------------------
 
 app = FastAPI(
-    title       = "Economic Calendar Scraper",
-    description = "Persistent-session Playwright scraper for ForexFactory & MyFxBook",
-    version     = "1.0.0",
+    title       = "Economic Calendar & Broker Spreads Scraper",
+    description = (
+        "Persistent-session Playwright scraper for:\n"
+        "• ForexFactory economic calendar\n"
+        "• MyFxBook economic calendar\n"
+        "• MyFxBook live broker spreads"
+    ),
+    version     = "2.0.0",
     lifespan    = lifespan,
 )
 
-app.include_router(ff_routes.router,  prefix="/forexfactory", tags=["ForexFactory"])
-app.include_router(mfb_routes.router, prefix="/myfxbook",     tags=["MyFxBook"])
+app.include_router(ff_routes.router,  prefix="/forexfactory",   tags=["ForexFactory"])
+app.include_router(mfb_routes.router, prefix="/myfxbook",        tags=["MyFxBook Calendar"])
+app.include_router(bg_routes.router,  prefix="/broker-spreads",  tags=["Broker Spreads"])
 
 
 @app.get("/health")
