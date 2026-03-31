@@ -20,9 +20,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 # ─────────────────────────────────────────────
 FROM deps AS playwright
 
-# Playwright needs these system libraries to run Chromium headless
+# Force HTTPS (fix network blocks)
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Core Chromium deps
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -43,7 +44,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libasound2 \
     libatspi2.0-0 \
-    # Font rendering (so pages don't look broken)
     fonts-liberation \
     fonts-noto-color-emoji \
     && rm -rf /var/lib/apt/lists/*
