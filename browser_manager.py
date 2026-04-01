@@ -8,8 +8,6 @@ FF_URL  = "https://www.forexfactory.com/calendar"
 MFB_URL = "https://www.myfxbook.com/forex-economic-calendar"
 BG_URL  = "https://www.forexfactory.com/brokers/kenya"
 
-# Injected into every page before any script runs.
-# Removes the most common bot-detection fingerprints.
 STEALTH_SCRIPT = """
     Object.defineProperty(navigator, 'webdriver',  { get: () => undefined });
     Object.defineProperty(navigator, 'plugins',    { get: () => [1, 2, 3, 4, 5] });
@@ -24,21 +22,26 @@ class BrowserManager:
     Owns the single Chromium instance and three persistent pages:
       ff_page  — ForexFactory calendar  (session cookie holder for API calls)
       mfb_page — MyFxBook economic calendar
-      bg_page  — MyFxBook broker guide (forex-broker-spreads)
+      bg_page  — ForexFactory broker guide (broker spreads)
+
+    NOTE: bg_page is intentionally NOT pre-loaded at startup.
+    The broker guide scraper calls page.goto() itself on every live request
+    and handles its own wait_for_selector — so startup only needs the page
+    object to exist in a blank state.
     """
 
     def __init__(self) -> None:
-        self._playwright: Playwright    | None = None
-        self._browser:    Browser       | None = None
+        self._playwright: Playwright     | None = None
+        self._browser:    Browser        | None = None
         self._ctx:        BrowserContext | None = None
 
         self.ff_page:  Page | None = None
         self.mfb_page: Page | None = None
-        self.bg_page:  Page | None = None   # broker guide page
+        self.bg_page:  Page | None = None
 
         self.ff_lock  = asyncio.Lock()
         self.mfb_lock = asyncio.Lock()
-        self.bg_lock  = asyncio.Lock()      # lock for broker guide requests
+        self.bg_lock  = asyncio.Lock()
 
     # ------------------------------------------------------------------ #
     #  Lifecycle                                                           #
@@ -77,17 +80,16 @@ class BrowserManager:
             },
         )
 
-        # Apply stealth before any page loads
         await self._ctx.add_init_script(STEALTH_SCRIPT)
 
         self.ff_page  = await self._ctx.new_page()
         self.mfb_page = await self._ctx.new_page()
-        self.bg_page  = await self._ctx.new_page()
+        self.bg_page  = await self._ctx.new_page()   # blank — scraper loads it on demand
 
         await self._navigate_ff()
         await self._navigate_mfb()
-        await self._navigate_bg()
-        logger.info("All three pages loaded and ready.")
+        # bg_page is intentionally left blank at startup — see class docstring
+        logger.info("FF and MFB pages ready. BG page will load on first request.")
 
     async def stop(self) -> None:
         logger.info("Shutting down browser …")
@@ -100,14 +102,10 @@ class BrowserManager:
             logger.warning("Shutdown error: %s", exc)
 
     # ------------------------------------------------------------------ #
-    #  Public reload methods (called by scrapers / routes)                #
+    #  Public reload methods                                               #
     # ------------------------------------------------------------------ #
 
     async def reload_ff(self) -> None:
-        """
-        FF uses an API call — the persistent page only holds session cookies.
-        Only re-navigate if the page has crashed (URL gone blank).
-        """
         try:
             current_url = self.ff_page.url
             if not current_url or "forexfactory" not in current_url:
@@ -120,7 +118,6 @@ class BrowserManager:
             await self._recover_ff()
 
     async def reload_mfb(self) -> None:
-        """MFB calendar scraper reloads itself — this is a health-check only."""
         try:
             await self._wait_for_mfb_ready(self.mfb_page)
         except Exception as exc:
@@ -129,40 +126,38 @@ class BrowserManager:
 
     async def reload_bg(self) -> None:
         """
-        Broker guide page is always reloaded fresh by the scraper itself
-        (spreads are live).  This method just health-checks the page object.
+        bg_page health check — only verifies the page object is alive.
+        The scraper always does a fresh page.goto() per request, so we
+        never need to pre-load or re-navigate here.
         """
         try:
-            current_url = self.bg_page.url
-            if not current_url or "myfxbook" not in current_url:
-                logger.warning("BG page URL lost (%s), re-navigating …", current_url)
-                await self._recover_bg()
-            else:
-                logger.debug("BG session page healthy at %s", current_url)
+            if self.bg_page is None or self.bg_page.is_closed():
+                logger.warning("BG page object gone, recreating …")
+                self.bg_page = await self._ctx.new_page()
         except Exception as exc:
-            logger.warning("BG page check failed (%s), recovering …", exc)
-            await self._recover_bg()
+            logger.warning("BG page check failed (%s), recreating …", exc)
+            try:
+                self.bg_page = await self._ctx.new_page()
+            except Exception as inner:
+                logger.error("BG page recreation failed: %s", inner)
 
     # ------------------------------------------------------------------ #
-    #  Internal helpers                                                    #
+    #  Internal navigation                                                 #
     # ------------------------------------------------------------------ #
 
     async def _navigate_ff(self) -> None:
         await self.ff_page.goto(FF_URL, wait_until="networkidle", timeout=60_000)
         await self._wait_for_ff_ready(self.ff_page)
-        logger.debug("ForexFactory page ready.")
+        logger.debug("ForexFactory calendar page ready.")
 
     async def _navigate_mfb(self) -> None:
-        # MFB ads fire forever — networkidle never resolves, use domcontentloaded
         await self.mfb_page.goto(MFB_URL, wait_until="domcontentloaded", timeout=60_000)
         await self._wait_for_mfb_ready(self.mfb_page)
         logger.debug("MyFxBook calendar page ready.")
 
-    async def _navigate_bg(self) -> None:
-        # Broker guide page — same ad-fire problem, use domcontentloaded
-        await self.bg_page.goto(BG_URL, wait_until="domcontentloaded", timeout=60_000)
-        await self._wait_for_bg_ready(self.bg_page)
-        logger.debug("MyFxBook broker guide page ready.")
+    # ------------------------------------------------------------------ #
+    #  Wait-for-ready selectors                                            #
+    # ------------------------------------------------------------------ #
 
     async def _wait_for_ff_ready(self, page: Page) -> None:
         await page.wait_for_selector("table.calendar__table", timeout=30_000)
@@ -172,13 +167,9 @@ class BrowserManager:
         await page.wait_for_selector("#economicCalendarTable", timeout=30_000)
         logger.debug("MFB calendar ready — #economicCalendarTable found")
 
-    async def _wait_for_bg_ready(self, page: Page) -> None:
-        # Wait for at least one broker row to be visible
-        await page.wait_for_selector(
-            "tr.broker-guide__row, tr[data-broker], table.broker-guide",
-            timeout=30_000,
-        )
-        logger.debug("BG ready — broker guide table found")
+    # ------------------------------------------------------------------ #
+    #  Recovery helpers                                                    #
+    # ------------------------------------------------------------------ #
 
     async def _recover_ff(self) -> None:
         try:
@@ -202,4 +193,5 @@ class BrowserManager:
         except Exception:
             pass
         self.bg_page = await self._ctx.new_page()
-        await self._navigate_bg()
+        # No navigation here — scraper handles its own goto() per request
+        logger.debug("BG page recreated (blank) — scraper will load on next request.")
