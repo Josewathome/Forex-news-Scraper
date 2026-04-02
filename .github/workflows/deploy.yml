@@ -61,9 +61,24 @@ jobs:
       # -----------------------------
       - name: Deploy application
         run: |
+          # Base64 encode secrets on the runner so special characters
+          # cannot break shell substitution on the remote server
+          B64_USER=$(printf '%s' '${{ secrets.DASHBOARD_USERNAME }}' | base64 -w 0)
+          B64_PASS=$(printf '%s' '${{ secrets.DASHBOARD_PASSWORD }}' | base64 -w 0)
+          B64_JWT=$(printf '%s' '${{ secrets.JWT_SECRET }}' | base64 -w 0)
+          B64_ENC=$(printf '%s' '${{ secrets.ENCRYPTION_KEY }}' | base64 -w 0)
+
           ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << ENDSSH
 
           cd /home/gre8/forexnews.gre8i.com/Forex-news-Scraper
+
+          # Decode on the server — values only exist in memory this session
+          export DASHBOARD_USERNAME="\$(echo '$B64_USER' | base64 -d)"
+          export DASHBOARD_PASSWORD="\$(echo '$B64_PASS' | base64 -d)"
+          export JWT_SECRET="\$(echo '$B64_JWT' | base64 -d)"
+          export ENCRYPTION_KEY="\$(echo '$B64_ENC' | base64 -d)"
+          export DATA_DIR=/app/data
+          export LOGS_DIR=/app/logs
 
           echo "Pulling latest images..."
           docker compose pull
@@ -72,12 +87,6 @@ jobs:
           docker compose build
 
           echo "Starting services..."
-          DASHBOARD_USERNAME="${{ secrets.DASHBOARD_USERNAME }}" \
-          DASHBOARD_PASSWORD="${{ secrets.DASHBOARD_PASSWORD }}" \
-          JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-          ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}" \
-          DATA_DIR=/app/data \
-          LOGS_DIR=/app/logs \
           docker compose up -d
 
           echo "Deployment complete"
