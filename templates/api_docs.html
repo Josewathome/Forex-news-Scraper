@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOREX MONITOR // API REFERENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── CSS Variables ─────────────────────────────────────────────────────── */
+:root {
+  --bg:            #06080f;
+  --bg-card:       #0a1020;
+  --bg-elevated:   #0e1729;
+  --bg-input:      #060d1a;
+
+  --border:        rgba(56, 189, 248, 0.09);
+  --border-md:     rgba(56, 189, 248, 0.18);
+  --border-hi:     rgba(56, 189, 248, 0.35);
+
+  --green:         #00e87a;
+  --green-dim:     rgba(0, 232, 122, 0.12);
+  --green-glow:    rgba(0, 232, 122, 0.25);
+  --amber:         #f5a623;
+  --amber-dim:     rgba(245, 166, 35, 0.12);
+  --red:           #ff4757;
+  --red-dim:       rgba(255, 71, 87, 0.12);
+  --blue:          #38bdf8;
+  --blue-dim:      rgba(56, 189, 248, 0.1);
+
+  --text:          #dde5f0;
+  --text-2:        #6a7f96;
+  --text-3:        #2a3a4c;
+
+  --mono: 'JetBrains Mono', monospace;
+  --ui:   'Syne', sans-serif;
+
+  --radius: 6px;
+  --transition: 180ms ease;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--ui);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── Dot-grid background ─────────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle, var(--text-3) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: .5;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-2); }
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  height: 58px;
+  background: rgba(6,8,15,.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 20px; }
+
+.logo {
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: .12em;
+  color: var(--green);
+}
+
+.header-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-md);
+  border-radius: 3px;
+  padding: 3px 8px;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: var(--text-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition);
+}
+.back-btn:hover { border-color: var(--border-hi); color: var(--text); }
+
+.main {
+  flex: 1;
+  padding: 36px 32px 64px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── Page intro ───────────────────────────────────────────────────────────── */
+.page-intro {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.page-title {
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: .06em;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.page-title span { color: var(--green); }
+.page-subtitle {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+/* ── Auth notice banner ───────────────────────────────────────────────────── */
+.auth-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--blue-dim);
+  border: 1px solid rgba(56,189,248,.2);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 28px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+.auth-notice-icon {
+  font-size: 14px;
+  color: var(--blue);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.auth-notice code {
+  color: var(--amber);
+  font-family: var(--mono);
+}
+
+/* ── Section header ───────────────────────────────────────────────────────── */
+.section-hdr { margin-bottom: 14px; }
+.section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: var(--text-2);
+  padding-left: 10px;
+  border-left: 2px solid var(--blue);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/*  DOC ACCORDION                                                             */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.doc-item { border-bottom: 1px solid var(--border); }
+.doc-item:last-child { border-bottom: none; }
+
+.doc-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition);
+}
+.doc-header:hover { background: var(--bg-elevated); }
+.doc-item.open .doc-header { background: var(--bg-elevated); }
+
+.method-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  padding: 3px 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.method-badge.get {
+  color: var(--green);
+  background: var(--green-dim);
+  border: 1px solid rgba(0,232,122,.25);
+}
+
+.doc-header-path {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--blue);
+  letter-spacing: .03em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-header-desc {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-2);
+  letter-spacing: .05em;
+  flex-shrink: 0;
+}
+
+.doc-chevron {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-3);
+  transition: transform 240ms ease, color var(--transition);
+}
+.doc-chevron svg { width: 12px; height: 12px; }
+.doc-item.open .doc-chevron { transform: rotate(180deg); color: var(--blue); }
+
+.doc-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.doc-item.open .doc-body { max-height: 2400px; }
+
+.doc-body-inner {
+  padding: 0 24px 28px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.doc-section { margin-top: 24px; }
+
+.doc-section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .22em;
+  color: var(--text-2);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-url-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 11px 14px;
+}
+.doc-url-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  flex: 1;
+  word-break: break-all;
+  line-height: 1.6;
+}
+.doc-url-text .url-path  { color: var(--blue); }
+.doc-url-text .url-query { color: var(--amber); }
+
+.doc-copy-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 5px 11px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.doc-copy-btn:hover { border-color: var(--green); color: var(--green); }
+.doc-copy-btn.copied { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+.doc-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+/* ── Tables ───────────────────────────────────────────────────────────────── */
+.table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.param-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.param-table thead tr { background: var(--bg-elevated); }
+.param-table th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+.param-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.param-table tr:last-child td { border-bottom: none; }
+.param-table tr:hover td { background: rgba(56,189,248,.02); }
+
+.param-name  { color: var(--blue); white-space: nowrap; }
+.param-type  { color: var(--amber); white-space: nowrap; }
+.param-req   { white-space: nowrap; }
+.param-req.yes { color: var(--green); }
+.param-req.no  { color: var(--text-3); }
+.param-multi {
+  display: inline-block;
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: var(--amber);
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,.2);
+  border-radius: 2px;
+  padding: 1px 5px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.param-desc    { color: var(--text-2); }
+.param-example { color: var(--text-3); font-size: 10px; margin-top: 3px; }
+
+/* ── Code blocks ──────────────────────────────────────────────────────────── */
+.code-wrap {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+.code-lang {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+}
+.code-copy-btn {
+  background: transparent;
+  border: 1px solid var(--border-md);
+  border-radius: 3px;
+  padding: 3px 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.code-copy-btn:hover { border-color: var(--green); color: var(--green); }
+.code-copy-btn.copied { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+.code-pre {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* JSON syntax highlighting */
+.jt-key   { color: var(--text); }
+.jt-str   { color: var(--amber); }
+.jt-num   { color: var(--blue); }
+.jt-bool  { color: var(--green); }
+.jt-null  { color: var(--text-2); }
+.jt-brace { color: var(--text-3); }
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 28px; right: 28px;
+  z-index: 300;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  animation: toast-in .2s ease;
+  max-width: 320px;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.toast.ok    { background: var(--green-dim); border-color: rgba(0,232,122,.25); color: var(--green); }
+.toast.error { background: var(--red-dim);   border-color: rgba(255,71,87,.25); color: var(--red); }
+.toast.info  { background: var(--blue-dim);  border-color: rgba(56,189,248,.25); color: var(--blue); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  header { padding: 0 16px; }
+  .main  { padding: 24px 16px 48px; }
+  .doc-header-desc { display: none; }
+  .doc-url-block { flex-direction: column; align-items: flex-start; }
+  .param-table th:nth-child(4),
+  .param-table td:nth-child(4) { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="header-left">
+      <span class="logo">⬡ FOREX MONITOR</span>
+      <span class="header-tag">API REFERENCE</span>
+    </div>
+    <a href="/" class="back-btn">↩ DASHBOARD</a>
+  </header>
+
+  <div class="main">
+
+    <!-- Intro -->
+    <div class="page-intro">
+      <div class="page-title">API <span>Reference</span></div>
+      <div class="page-subtitle">
+        BASE URL: http://your-server:8087 &nbsp;·&nbsp;
+        ALL ENDPOINTS REQUIRE AN API KEY &nbsp;·&nbsp;
+        RESPONSES ARE JSON
+      </div>
+    </div>
+
+    <!-- Auth notice -->
+    <div class="auth-notice">
+      <span class="auth-notice-icon">ℹ</span>
+      <span>
+        Every scraper endpoint requires authentication. Pass your key as a header:
+        <code>X-API-Key: sk-…</code> &nbsp;or as a query parameter: <code>?api_key=sk-…</code>.
+        Keys are issued from the dashboard. Rate limits are enforced per key per 60 seconds.
+      </span>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="section-hdr">
+      <span class="section-title">ENDPOINTS</span>
+    </div>
+
+    <div class="doc-list">
+
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <!-- 1. MyFxBook Events                                               -->
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <div class="doc-item" id="doc-myfxbook">
+        <div class="doc-header" onclick="toggleDoc('doc-myfxbook')">
+          <span class="method-badge get">GET</span>
+          <span class="doc-header-path">/myfxbook/events</span>
+          <span class="doc-header-desc">ECONOMIC CALENDAR — MYFXBOOK</span>
+          <span class="doc-chevron">
+            <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <div class="doc-body">
+          <div class="doc-body-inner">
+
+            <div class="doc-section">
+              <div class="doc-section-label">DESCRIPTION</div>
+              <p class="doc-desc">Returns scheduled economic events from the MyFxBook calendar for one or more currencies over a date range. Responses are cached for 30 minutes. Repeat the <code style="color:var(--amber);font-family:var(--mono)">currency</code> parameter to request multiple currencies in a single call.</p>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE REQUEST URL</div>
+              <div class="doc-url-block">
+                <span class="doc-url-text">
+                  <span class="url-path">https://forexnews.gre8i.com/myfxbook/events</span><span class="url-query">?currency=CNY&amp;currency=AUD&amp;start_date=2026-03-10&amp;end_date=2026-03-11</span>
+                </span>
+                <button class="doc-copy-btn" onclick="copyUrl(this, 'https://forexnews.gre8i.com/myfxbook/events?currency=CNY&currency=AUD&start_date=2026-03-10&end_date=2026-03-11')">⎘ COPY</button>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">QUERY PARAMETERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>PARAMETER</th><th>TYPE</th><th>REQUIRED</th><th>DESCRIPTION &amp; EXAMPLE</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">currency</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">ISO 4217 currency code. Repeat to filter multiple currencies simultaneously.</div>
+                        <div class="param-example">e.g. currency=USD&amp;currency=EUR&amp;currency=CNY</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">start_date</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Start of the date range in YYYY-MM-DD format.</div>
+                        <div class="param-example">e.g. start_date=2026-03-10</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">end_date</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">End of the date range in YYYY-MM-DD format. Must be ≥ start_date.</div>
+                        <div class="param-example">e.g. end_date=2026-03-11</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">REQUIRED HEADERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>HEADER</th><th>VALUE</th><th>REQUIRED</th><th>NOTES</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">X-API-Key</span></td>
+                      <td><span class="param-type">sk-…</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td><span class="param-desc">Your API key. Alternatively pass as <code style="color:var(--amber);font-family:var(--mono)">?api_key=sk-…</code> query parameter.</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">CURL EXAMPLE</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">SHELL</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'curl-myfxbook')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="curl-myfxbook">curl -X GET \
+  "https://forexnews.gre8i.com/myfxbook/events?currency=CNY&currency=AUD&start_date=2026-03-10&end_date=2026-03-11" \
+  -H "X-API-Key: sk-your-api-key-here"</pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE RESPONSE — 200 OK</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">JSON</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'resp-myfxbook')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="resp-myfxbook-raw" style="display:none">{
+    "start_date": "2026-03-10",
+    "end_date": "2026-03-11",
+    "timezone": "(GMT -12:00) International Date Line West",
+    "events": [
+        {
+            "time": "03:30",
+            "timezone": "(GMT -12:00) International Date Line West",
+            "currency": "AUD",
+            "impact": "low",
+            "event": "Building Permits YoY (Jan)",
+            "actual": "-15.7%",
+            "forecast": "-15.7%",
+            "previous": "1.1%",
+            "date": "2026-03-10"
+        },
+        {
+            "time": "03:00",
+            "timezone": "(GMT -12:00) International Date Line West",
+            "currency": "CNY",
+            "impact": "low",
+            "event": "National People's Congress",
+            "actual": null,
+            "forecast": null,
+            "previous": null,
+            "date": "2026-03-11"
+        }
+    ],
+    "source": "myfxbook",
+    "cached": false
+}</pre>
+                <pre class="code-pre" id="resp-myfxbook"></pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">RESPONSE FIELDS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>FIELD</th><th>TYPE</th><th>DESCRIPTION</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="param-name">start_date</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Echoed start of the requested date range.</span></td></tr>
+                    <tr><td><span class="param-name">end_date</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Echoed end of the requested date range.</span></td></tr>
+                    <tr><td><span class="param-name">timezone</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Timezone label that applies to all event times in this response.</span></td></tr>
+                    <tr><td><span class="param-name">events[].time</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Scheduled time of the event (HH:MM, 24-hour).</span></td></tr>
+                    <tr><td><span class="param-name">events[].currency</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">ISO 4217 currency code the event belongs to.</span></td></tr>
+                    <tr><td><span class="param-name">events[].impact</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Market impact: <code style="color:var(--green);font-family:var(--mono)">low</code> | <code style="color:var(--amber);font-family:var(--mono)">medium</code> | <code style="color:var(--red);font-family:var(--mono)">high</code>.</span></td></tr>
+                    <tr><td><span class="param-name">events[].actual</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Released figure. null if not yet published.</span></td></tr>
+                    <tr><td><span class="param-name">events[].forecast</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Consensus estimate. null if unavailable.</span></td></tr>
+                    <tr><td><span class="param-name">events[].previous</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Prior period figure. null if unavailable.</span></td></tr>
+                    <tr><td><span class="param-name">cached</span></td><td><span class="param-type">boolean</span></td><td><span class="param-desc">true if served from the 30-minute cache.</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <!-- 2. ForexFactory Events                                           -->
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <div class="doc-item" id="doc-forexfactory">
+        <div class="doc-header" onclick="toggleDoc('doc-forexfactory')">
+          <span class="method-badge get">GET</span>
+          <span class="doc-header-path">/forexfactory/events</span>
+          <span class="doc-header-desc">ECONOMIC CALENDAR — FOREXFACTORY</span>
+          <span class="doc-chevron">
+            <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <div class="doc-body">
+          <div class="doc-body-inner">
+
+            <div class="doc-section">
+              <div class="doc-section-label">DESCRIPTION</div>
+              <p class="doc-desc">Returns scheduled economic events from the ForexFactory calendar for one or more currencies on a specific date. All times are returned in UTC. Responses are cached for 30 minutes. Repeat the <code style="color:var(--amber);font-family:var(--mono)">currency</code> parameter for multiple currencies.</p>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE REQUEST URL</div>
+              <div class="doc-url-block">
+                <span class="doc-url-text">
+                  <span class="url-path">https://forexnews.gre8i.com/forexfactory/events</span><span class="url-query">?currency=USD&amp;date=2026-03-30</span>
+                </span>
+                <button class="doc-copy-btn" onclick="copyUrl(this, 'https://forexnews.gre8i.com/forexfactory/events?currency=USD&date=2026-03-30')">⎘ COPY</button>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">QUERY PARAMETERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>PARAMETER</th><th>TYPE</th><th>REQUIRED</th><th>DESCRIPTION &amp; EXAMPLE</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">currency</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">ISO 4217 currency code. Repeat to filter multiple currencies at once.</div>
+                        <div class="param-example">e.g. currency=USD&amp;currency=GBP</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">date</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Target date in YYYY-MM-DD format.</div>
+                        <div class="param-example">e.g. date=2026-03-30</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">REQUIRED HEADERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>HEADER</th><th>VALUE</th><th>REQUIRED</th><th>NOTES</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">X-API-Key</span></td>
+                      <td><span class="param-type">sk-…</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td><span class="param-desc">Alternatively pass as <code style="color:var(--amber);font-family:var(--mono)">?api_key=sk-…</code> query parameter.</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">CURL EXAMPLE</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">SHELL</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'curl-ff')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="curl-ff">curl -X GET \
+  "https://forexnews.gre8i.com/forexfactory/events?currency=USD&date=2026-03-30" \
+  -H "X-API-Key: sk-your-api-key-here"</pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE RESPONSE — 200 OK</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">JSON</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'resp-ff')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="resp-ff-raw" style="display:none">{
+    "date": "2026-03-30",
+    "timezone": "UTC",
+    "currencies": ["USD"],
+    "events": [
+        {
+            "time": "5:30pm",
+            "timezone": "UTC",
+            "currency": "USD",
+            "impact": "high",
+            "event": "Fed Chair Powell Speaks",
+            "actual": null,
+            "forecast": null,
+            "previous": null
+        },
+        {
+            "time": "11:00pm",
+            "timezone": "UTC",
+            "currency": "USD",
+            "impact": "low",
+            "event": "FOMC Member Williams Speaks",
+            "actual": null,
+            "forecast": null,
+            "previous": null
+        }
+    ],
+    "source": "forexfactory",
+    "cached": false
+}</pre>
+                <pre class="code-pre" id="resp-ff"></pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">RESPONSE FIELDS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>FIELD</th><th>TYPE</th><th>DESCRIPTION</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="param-name">date</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Echoed date from the request.</span></td></tr>
+                    <tr><td><span class="param-name">timezone</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Always UTC for ForexFactory responses.</span></td></tr>
+                    <tr><td><span class="param-name">currencies</span></td><td><span class="param-type">string[]</span></td><td><span class="param-desc">List of currency codes that were requested.</span></td></tr>
+                    <tr><td><span class="param-name">events[].time</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Scheduled time as shown on ForexFactory (e.g. 5:30pm).</span></td></tr>
+                    <tr><td><span class="param-name">events[].currency</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">ISO 4217 code for the event's country/currency.</span></td></tr>
+                    <tr><td><span class="param-name">events[].impact</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Market impact: <code style="color:var(--green);font-family:var(--mono)">low</code> | <code style="color:var(--amber);font-family:var(--mono)">medium</code> | <code style="color:var(--red);font-family:var(--mono)">high</code>.</span></td></tr>
+                    <tr><td><span class="param-name">events[].actual</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Released figure. null if not yet published.</span></td></tr>
+                    <tr><td><span class="param-name">events[].forecast</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Consensus estimate. null if not available.</span></td></tr>
+                    <tr><td><span class="param-name">events[].previous</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Prior period figure. null if not available.</span></td></tr>
+                    <tr><td><span class="param-name">cached</span></td><td><span class="param-type">boolean</span></td><td><span class="param-desc">true if served from the 30-minute cache.</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <!-- 3. Broker Spreads Live                                           -->
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <div class="doc-item" id="doc-broker">
+        <div class="doc-header" onclick="toggleDoc('doc-broker')">
+          <span class="method-badge get">GET</span>
+          <span class="doc-header-path">/broker-spreads/live</span>
+          <span class="doc-header-desc">LIVE BROKER SPREADS — FOREXFACTORY</span>
+          <span class="doc-chevron">
+            <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <div class="doc-body">
+          <div class="doc-body-inner">
+
+            <div class="doc-section">
+              <div class="doc-section-label">DESCRIPTION</div>
+              <p class="doc-desc">Returns live spread and commission data for one or more brokers and trading symbols, scraped in real time from the ForexFactory broker guide. Broker names are matched case-insensitively by substring — so <code style="color:var(--amber);font-family:var(--mono)">HFM</code>, <code style="color:var(--amber);font-family:var(--mono)">hfm</code>, and <code style="color:var(--amber);font-family:var(--mono)">HF Markets</code> all resolve to the same broker row. Symbols accept slash or no-slash: <code style="color:var(--amber);font-family:var(--mono)">EUR/USD</code> and <code style="color:var(--amber);font-family:var(--mono)">EURUSD</code> are equivalent. Responses are cached for 5 minutes.</p>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE REQUEST URL</div>
+              <div class="doc-url-block">
+                <span class="doc-url-text">
+                  <span class="url-path">https://forexnews.gre8i.com/broker-spreads/live</span><span class="url-query">?broker=HFM&amp;symbol=EUR/USD&amp;symbol=USD/JPY</span>
+                </span>
+                <button class="doc-copy-btn" onclick="copyUrl(this, 'https://forexnews.gre8i.com/broker-spreads/live?broker=HFM&symbol=EUR/USD&symbol=USD/JPY')">⎘ COPY</button>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">QUERY PARAMETERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>PARAMETER</th><th>TYPE</th><th>REQUIRED</th><th>DESCRIPTION &amp; EXAMPLE</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">broker</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Broker name. Case-insensitive substring match. Repeat to compare multiple brokers.</div>
+                        <div class="param-example">e.g. broker=HFM&amp;broker=ICMarkets</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">symbol</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Trading symbol. Slash optional. Repeat for multiple symbols.</div>
+                        <div class="param-example">e.g. symbol=EUR/USD&amp;symbol=USDJPY</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">REQUIRED HEADERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>HEADER</th><th>VALUE</th><th>REQUIRED</th><th>NOTES</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">X-API-Key</span></td>
+                      <td><span class="param-type">sk-…</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td><span class="param-desc">Alternatively pass as <code style="color:var(--amber);font-family:var(--mono)">?api_key=sk-…</code> query parameter.</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">CURL EXAMPLE</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">SHELL</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'curl-broker')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="curl-broker">curl -X GET \
+  "https://forexnews.gre8i.com/broker-spreads/live?broker=HFM&symbol=EUR/USD&symbol=USD/JPY" \
+  -H "X-API-Key: sk-your-api-key-here"</pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE RESPONSE — 200 OK</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">JSON</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'resp-broker')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="resp-broker-raw" style="display:none">{
+    "brokers": [
+        {
+            "broker": "HFM",
+            "symbols": [
+                {
+                    "symbol": "EUR/USD",
+                    "spread": "0.0",
+                    "commission": "+$3",
+                    "quality": null
+                },
+                {
+                    "symbol": "USD/JPY",
+                    "spread": "0.4",
+                    "commission": "+$3",
+                    "quality": null
+                }
+            ],
+            "scraped_at": "2026-04-01T11:14:28Z"
+        }
+    ],
+    "symbols": ["EUR/USD", "USD/JPY"],
+    "source": "forexfactory-broker-spreads",
+    "cached": true
+}</pre>
+                <pre class="code-pre" id="resp-broker"></pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">RESPONSE FIELDS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>FIELD</th><th>TYPE</th><th>DESCRIPTION</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="param-name">brokers[].broker</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Broker display name as shown on ForexFactory.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].symbol</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Normalised trading symbol (e.g. EUR/USD).</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].spread</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Current live spread in pips.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].commission</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Per-lot commission (e.g. +$3). Empty string means no commission.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].quality</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Relative quality: <code style="color:var(--green);font-family:var(--mono)">good</code> | <code style="color:var(--red);font-family:var(--mono)">bad</code> | null.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].scraped_at</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">ISO 8601 UTC timestamp of when the data was fetched.</span></td></tr>
+                    <tr><td><span class="param-name">symbols</span></td><td><span class="param-type">string[]</span></td><td><span class="param-desc">Normalised list of requested symbols.</span></td></tr>
+                    <tr><td><span class="param-name">cached</span></td><td><span class="param-type">boolean</span></td><td><span class="param-desc">true if served from the 5-minute cache.</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.doc-list -->
+  </div><!-- /.main -->
+</div><!-- /.page -->
+
+<div id="toast" class="toast" hidden></div>
+
+<script>
+'use strict';
+
+// ── Accordion ─────────────────────────────────────────────────────────── //
+function toggleDoc(id) {
+  const item = document.getElementById(id);
+  if (!item) return;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.doc-item.open').forEach(el => {
+    if (el.id !== id) el.classList.remove('open');
+  });
+  item.classList.toggle('open', !wasOpen);
+}
+
+// ── JSON syntax highlighter ───────────────────────────────────────────── //
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function highlightJson(raw) {
+  return raw.replace(
+    /("(?:[^"\\]|\\.)*")(\s*:\s*)|("(?:[^"\\]|\\.)*")|(true|false)|(null)|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}\[\],])/g,
+    (match, key, colon, strVal, bool, nil, num, punct) => {
+      if (key      !== undefined) return `<span class="jt-key">${escHtml(key)}</span>${colon}`;
+      if (strVal   !== undefined) return `<span class="jt-str">${escHtml(strVal)}</span>`;
+      if (bool     !== undefined) return `<span class="jt-bool">${bool}</span>`;
+      if (nil      !== undefined) return `<span class="jt-null">null</span>`;
+      if (num      !== undefined) return `<span class="jt-num">${num}</span>`;
+      if (punct    !== undefined) return `<span class="jt-brace">${escHtml(punct)}</span>`;
+      return match;
+    }
+  );
+}
+
+const RESPONSE_PAIRS = [
+  ['resp-myfxbook-raw', 'resp-myfxbook'],
+  ['resp-ff-raw',       'resp-ff'],
+  ['resp-broker-raw',   'resp-broker'],
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+  RESPONSE_PAIRS.forEach(([srcId, tgtId]) => {
+    const src = document.getElementById(srcId);
+    const tgt = document.getElementById(tgtId);
+    if (src && tgt) tgt.innerHTML = highlightJson(src.textContent);
+  });
+});
+
+// ── Copy helpers ──────────────────────────────────────────────────────── //
+function copyUrl(btn, url) {
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '✓ COPIED'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ COPY'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => toast('Copy failed.', 'error'));
+}
+
+function copyCode(btn, preId) {
+  const pre = document.getElementById(preId);
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.innerText || pre.textContent).then(() => {
+    btn.textContent = '✓ COPIED'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ COPY'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => toast('Copy failed.', 'error'));
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────── //
+let _toastTimer = null;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+}
+</script>
+</body>
+</html>

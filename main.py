@@ -122,7 +122,7 @@ db           = DatabaseManager(DB_PATH)
 key_manager  = APIKeyManager(db, ENCRYPTION_KEY)
 rate_limiter = RateLimiter()
 
-_PUBLIC_PREFIXES  = ("/auth/", "/api/dashboard", "/health", "/docs", "/openapi")
+_PUBLIC_PREFIXES  = ("/auth/", "/api/dashboard", "/health", "/docs", "/openapi", "/api-docs")
 _TRACKED_PREFIXES = ("/myfxbook", "/forexfactory", "/broker-spreads")
 
 
@@ -332,6 +332,27 @@ async def serve_dashboard():
     p = Path("templates/dashboard.html")
     return HTMLResponse(p.read_text() if p.exists() else "<h1>template missing</h1>")
 
+
+# ── API Documentation  (public, rate-limited by IP) ──────────────────────── #
+
+@app.get("/api-docs", response_class=HTMLResponse, tags=["Docs"])
+async def serve_api_docs(request: Request):
+    ip = _client_ip(request)
+
+    # Reuse the login rate limiter — same limit and window, separate key prefix
+    # so doc-page hammering does not consume a caller's login attempts.
+    if not rate_limiter.is_allowed(f"docs:{ip}", LOGIN_RATE_LIMIT, LOGIN_RATE_WINDOW):
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Too many requests. "
+                f"Maximum {LOGIN_RATE_LIMIT} per {LOGIN_RATE_WINDOW} seconds."
+            ),
+            headers={"Retry-After": str(LOGIN_RATE_WINDOW)},
+        )
+
+    p = Path("templates/api_docs.html")
+    return HTMLResponse(p.read_text() if p.exists() else "<h1>template missing</h1>")
 
 # ── Dashboard API  (JWT protected) ────────────────────────────────────────── #
 
