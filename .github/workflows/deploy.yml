@@ -10,13 +10,13 @@ jobs:
 
     steps:
       # -----------------------------
-      # 1. Checkout repository
+      # 1. Checkout
       # -----------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
       # -----------------------------
-      # 2. Setup SSH agent
+      # 2. Setup SSH
       # -----------------------------
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -32,11 +32,9 @@ jobs:
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       # -----------------------------
-      # 4. Ensure persistent directories exist
-      # src/data  → encrypted API keys  (never overwritten by rsync)
-      # src/logs  → rolling request logs (never overwritten by rsync)
+      # 4. Ensure directories exist
       # -----------------------------
-      - name: Ensure persistent directories exist
+      - name: Ensure directories
         run: |
           ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << 'ENDSSH'
           mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/src/logs
@@ -44,28 +42,21 @@ jobs:
           ENDSSH
 
       # -----------------------------
-      # 5. Sync code to server
-      # Exclude persistent data folders so deploys never overwrite them
+      # 5. Sync code
       # -----------------------------
       - name: Sync code to server
         run: |
           rsync -avz \
             -e "ssh -p ${{ secrets.SSH_PORT }}" \
             --exclude ".git" \
+            --exclude "node_modules" \
             --exclude "src/logs/" \
             --exclude "src/data/" \
             ./ \
             root@${{ secrets.SSH_HOST }}:/home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
       # -----------------------------
-      # 6. Deploy — secrets injected as env vars, NO .env file written to disk
-      #
-      # How it works:
-      #   - GitHub Actions substitutes ${{ secrets.X }} before sending over SSH
-      #   - export sets them in the remote shell's memory only
-      #   - docker compose reads them from the shell environment (no file needed)
-      #   - Docker saves them in the container config → survive restarts
-      #   - unset removes them from shell memory immediately after
+      # 6. Deploy
       # -----------------------------
       - name: Deploy application
         run: |
@@ -73,17 +64,26 @@ jobs:
 
           cd /home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
-          export DASHBOARD_USERNAME="${{ secrets.DASHBOARD_USERNAME }}"
-          export DASHBOARD_PASSWORD="${{ secrets.DASHBOARD_PASSWORD }}"
-          export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-          export ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}"
+          export DASHBOARD_USERNAME="${DASHBOARD_USERNAME}"
+          export DASHBOARD_PASSWORD="${DASHBOARD_PASSWORD}"
+          export JWT_SECRET="${JWT_SECRET}"
+          export ENCRYPTION_KEY="${ENCRYPTION_KEY}"
           export DATA_DIR="src/data"
           export LOGS_DIR="src/logs"
 
+          echo "Pulling latest images..."
           docker compose pull
+
+          echo "Building containers..."
           docker compose build
+
+          echo "Starting services..."
           docker compose up -d
 
-          unset DEVELOPMENT_SECRET DASHBOARD_USERNAME DASHBOARD_PASSWORD JWT_SECRET ENCRYPTION_KEY
-
+          echo "Deployment complete"
           ENDSSH
+        env:
+          DASHBOARD_USERNAME: ${{ secrets.DASHBOARD_USERNAME }}
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
