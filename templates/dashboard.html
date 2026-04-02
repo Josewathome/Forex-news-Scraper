@@ -1569,8 +1569,6 @@ header {
 
 // ── State ─────────────────────────────────────────────────────────────── //
 let _jwt       = null;
-let _refreshId = null;
-const REFRESH_MS = 30_000;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────── //
 document.addEventListener('DOMContentLoaded', () => {
@@ -1638,7 +1636,6 @@ function showLoginError(msg) {
 function logout() {
   _jwt = null;
   sessionStorage.removeItem('fxm_jwt');
-  clearInterval(_refreshId);
   showLogin();
 }
 
@@ -1652,7 +1649,6 @@ function showDashboard() {
   document.getElementById('login-page').hidden = true;
   document.getElementById('dashboard-page').hidden = false;
   loadAll();
-  _refreshId = setInterval(loadAll, REFRESH_MS);
 }
 
 // ── API helpers ───────────────────────────────────────────────────────── //
