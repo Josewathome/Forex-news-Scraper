@@ -20,7 +20,7 @@ services:
     container_name: forex-api
 
     ports:
-      - "8000:8000"
+      - "8087:8000"
 
     # ── Persistent volumes ─────────────────────────────────────────────── #
     volumes:
