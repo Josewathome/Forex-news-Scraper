@@ -1,4 +1,4 @@
-name: Deploy (Debug)
+name: Deploy
 
 on:
   push:
@@ -10,13 +10,13 @@ jobs:
 
     steps:
       # -----------------------------
-      # 1. Checkout
+      # 1. Checkout repository
       # -----------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
       # -----------------------------
-      # 2. Setup SSH
+      # 2. Setup SSH agent
       # -----------------------------
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -24,16 +24,7 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
       # -----------------------------
-      # 3. Debug: Print SSH info
-      # -----------------------------
-      - name: Debug SSH config
-        run: |
-          echo "SSH HOST: ${{ secrets.SSH_HOST }}"
-          echo "SSH PORT: ${{ secrets.SSH_PORT }}"
-          echo "User: root"
-
-      # -----------------------------
-      # 4. Add known_hosts
+      # 3. Add server to known_hosts
       # -----------------------------
       - name: Add server to known_hosts
         run: |
@@ -41,47 +32,40 @@ jobs:
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       # -----------------------------
-      # 5. Debug: Test SSH connection (VERBOSE)
+      # 4. Ensure persistent directories exist
+      # src/data  → encrypted API keys  (never overwritten by rsync)
+      # src/logs  → rolling request logs (never overwritten by rsync)
       # -----------------------------
-      - name: Test SSH connection
-        run: |
-          ssh -vvv -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} "echo '✅ SSH SUCCESS'"
-
-      # -----------------------------
-      # 6. Debug: Check remote access
-      # -----------------------------
-      - name: Check server access
-        run: |
-          ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << 'ENDSSH'
-          echo "Connected to server"
-          whoami
-          pwd
-          ls -la
-          ENDSSH
-
-      # -----------------------------
-      # 7. Ensure directories
-      # -----------------------------
-      - name: Ensure directories
+      - name: Ensure persistent directories exist
         run: |
           ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << 'ENDSSH'
           mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/src/logs
           mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/src/data
-          echo "Directories created"
           ENDSSH
 
       # -----------------------------
-      # 8. Debug: Test rsync
+      # 5. Sync code to server
+      # Exclude persistent data folders so deploys never overwrite them
       # -----------------------------
-      - name: Test rsync
+      - name: Sync code to server
         run: |
           rsync -avz \
             -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            --exclude ".git" \
+            --exclude "src/logs/" \
+            --exclude "src/data/" \
             ./ \
             root@${{ secrets.SSH_HOST }}:/home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
       # -----------------------------
-      # 9. Deploy (only runs if above works)
+      # 6. Deploy — secrets injected as env vars, NO .env file written to disk
+      #
+      # How it works:
+      #   - GitHub Actions substitutes ${{ secrets.X }} before sending over SSH
+      #   - export sets them in the remote shell's memory only
+      #   - docker compose reads them from the shell environment (no file needed)
+      #   - Docker saves them in the container config → survive restarts
+      #   - unset removes them from shell memory immediately after
       # -----------------------------
       - name: Deploy application
         run: |
@@ -89,13 +73,17 @@ jobs:
 
           cd /home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
-          echo "Starting deployment..."
-          docker compose ps
+          export DASHBOARD_USERNAME="${{ secrets.DASHBOARD_USERNAME }}"
+          export DASHBOARD_PASSWORD="${{ secrets.DASHBOARD_PASSWORD }}"
+          export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+          export ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}"
+          export DATA_DIR="src/data"
+          export LOGS_DIR="src/logs"
 
           docker compose pull
           docker compose build
           docker compose up -d
 
-          echo "Deployment finished"
+          unset DEVELOPMENT_SECRET DASHBOARD_USERNAME DASHBOARD_PASSWORD JWT_SECRET ENCRYPTION_KEY
 
           ENDSSH
