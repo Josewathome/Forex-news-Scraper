@@ -37,8 +37,8 @@ jobs:
       - name: Ensure directories
         run: |
           ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << 'ENDSSH'
-          mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/src/logs
-          mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/src/data
+          mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/logs
+          mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/data
           ENDSSH
 
       # -----------------------------
@@ -50,8 +50,8 @@ jobs:
             -e "ssh -p ${{ secrets.SSH_PORT }}" \
             --exclude ".git" \
             --exclude "node_modules" \
-            --exclude "src/logs/" \
-            --exclude "src/data/" \
+            --exclude "logs/" \
+            --exclude "data/" \
             ./ \
             root@${{ secrets.SSH_HOST }}:/home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
@@ -68,8 +68,8 @@ jobs:
           export DASHBOARD_PASSWORD="${DASHBOARD_PASSWORD}"
           export JWT_SECRET="${JWT_SECRET}"
           export ENCRYPTION_KEY="${ENCRYPTION_KEY}"
-          export DATA_DIR="src/data"
-          export LOGS_DIR="src/logs"
+          export DATA_DIR="data"
+          export LOGS_DIR="logs"
 
           echo "Pulling latest images..."
           docker compose pull
