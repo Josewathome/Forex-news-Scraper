@@ -32,11 +32,13 @@ COPY --from=deps /usr/local /usr/local
 # Copy application source
 COPY . .
 
-# Create persistent directories; these will be overridden by Docker volumes
+# Create persistent directories; these will be overridden by Docker bind mounts
 RUN mkdir -p /app/data /app/logs
 
-# Non-root user for security
-RUN useradd --create-home --shell /bin/bash scraper \
+# Non-root user for security.
+# UID 1001 is pinned explicitly so the host can chown the bind-mount
+# directories to this exact UID before the container starts.
+RUN useradd --uid 1001 --create-home --shell /bin/bash scraper \
  && chown -R scraper:scraper /app
 
 USER scraper

@@ -34,11 +34,22 @@ jobs:
       # -----------------------------
       # 4. Ensure directories exist
       # -----------------------------
+      # DATA_DIR and LOGS_DIR must be absolute host paths, e.g.:
+      #   /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/data
+      #   /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/logs
+      #
+      # chown 1001:1001 matches the pinned UID of the 'scraper' user in the
+      # Dockerfile, so the container can write to these directories without
+      # running as root.
       - name: Ensure directories
         run: |
           ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << 'ENDSSH'
-          mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/logs
-          mkdir -p /home/gre8/forexnews.gre8i.com/Forex-news-Scraper/data
+          mkdir -p ${{ secrets.LOGS_DIR }}
+          mkdir -p ${{ secrets.DATA_DIR }}
+          chown -R 1001:1001 ${{ secrets.LOGS_DIR }}
+          chown -R 1001:1001 ${{ secrets.DATA_DIR }}
+          chmod -R 755 ${{ secrets.LOGS_DIR }}
+          chmod -R 755 ${{ secrets.DATA_DIR }}
           ENDSSH
 
       # -----------------------------
@@ -62,7 +73,7 @@ jobs:
       - name: Deploy application
         run: |
           # Base64 encode each secret individually on the runner so special
-          # characters cannot break shell substitution on the remote server
+          # characters cannot break shell substitution on the remote server.
           B64_USER=$(printf '%s' '${{ secrets.DASHBOARD_USERNAME }}' | base64 -w 0)
           B64_PASS=$(printf '%s' '${{ secrets.DASHBOARD_PASSWORD }}' | base64 -w 0)
           B64_JWT=$(printf '%s' '${{ secrets.JWT_SECRET }}' | base64 -w 0)
@@ -76,15 +87,19 @@ jobs:
 
           cd /home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
-          # Decode on the server — values only exist in memory this session
+          # Decode on the server — values only exist in memory this session.
           export DASHBOARD_USERNAME="\$(echo '$B64_USER' | base64 -d)"
           export DASHBOARD_PASSWORD="\$(echo '$B64_PASS' | base64 -d)"
           export JWT_SECRET="\$(echo '$B64_JWT' | base64 -d)"
           export ENCRYPTION_KEY="\$(echo '$B64_ENC' | base64 -d)"
           export JWT_EXPIRY_HOURS="\$(echo '$B64_JWT_EXPIRY' | base64 -d)"
+          export LOG_RETENTION_DAYS="\$(echo '$B64_LOG_RETENTION' | base64 -d)"
+
+          # DATA_DIR and LOGS_DIR are the absolute host paths used by Docker
+          # Compose as bind mount sources (the ${DATA_DIR}/${LOGS_DIR} references
+          # in docker-compose.yml volumes are resolved from these exports).
           export DATA_DIR="\$(echo '$B64_DATA_DIR' | base64 -d)"
           export LOGS_DIR="\$(echo '$B64_LOGS_DIR' | base64 -d)"
-          export LOG_RETENTION_DAYS="\$(echo '$B64_LOG_RETENTION' | base64 -d)"
 
           echo "Pulling latest images..."
           docker compose pull
@@ -93,7 +108,11 @@ jobs:
           docker compose build
 
           echo "Starting services..."
-          docker compose up -d
+          # --force-recreate: always replace the running container with the
+          #                   newly built image, even if the tag hasn't changed.
+          # --remove-orphans: clean up containers for services removed from
+          #                   docker-compose.yml since the last deployment.
+          docker compose up -d --force-recreate --remove-orphans
 
           echo "Deployment complete"
           ENDSSH

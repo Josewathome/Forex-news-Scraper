@@ -4,11 +4,16 @@
 #   docker compose up --build -d
 #
 # Secrets are injected via GitHub Actions / CI:
-#   DASHBOARD_USERNAME, DASHBOARD_PASSWORD, JWT_SECRET, ENCRYPTION_KEY
+#   DASHBOARD_USERNAME, DASHBOARD_PASSWORD, JWT_SECRET, ENCRYPTION_KEY,
+#   DATA_DIR, LOGS_DIR
 #
-# Two named volumes provide persistence across restarts:
-#   api_data  – encrypted API keys  (data/api_keys.json)
-#   api_logs  – rotating request logs (logs/YYYY-MM-DD.json)
+# Two bind mounts provide persistence across restarts AND direct host access:
+#   ${DATA_DIR} → /app/data  – SQLite database (forex_api.db)
+#   ${LOGS_DIR} → /app/logs  – rotating application logs (app.log)
+#
+# DATA_DIR and LOGS_DIR must be absolute paths on the host, e.g.:
+#   DATA_DIR=/home/gre8/forexnews.gre8i.com/Forex-news-Scraper/data
+#   LOGS_DIR=/home/gre8/forexnews.gre8i.com/Forex-news-Scraper/logs
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -22,17 +27,21 @@ services:
     ports:
       - "8087:8000"
 
-    # ── Persistent volumes ─────────────────────────────────────────────── #
+    # ── Bind mounts — host paths come from deployment env vars ────────────── #
+    # The left side (${VAR}) is the absolute host path.
+    # The right side is always the fixed container-internal path.
     volumes:
-      - api_data:/app/data   # encrypted API keys survive restarts
-      - api_logs:/app/logs   # rolling request logs (3-day retention)
+      - ${DATA_DIR}:/app/data
+      - ${LOGS_DIR}:/app/logs
 
-    # ── Runtime env (override with deployment secrets) ─────────────────── #
+    # ── Runtime env ───────────────────────────────────────────────────────── #
+    # DATA_DIR / LOGS_DIR here are the container-internal paths — always fixed.
+    # The host-side paths are handled by the volume bind mounts above.
     environment:
       DATA_DIR: /app/data
       LOGS_DIR: /app/logs
 
-      # Provide these via GitHub Actions secrets / CI pipeline:
+      # Provided via GitHub Actions secrets / CI pipeline:
       DASHBOARD_USERNAME: ${DASHBOARD_USERNAME:-admin}
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-changeme}
       JWT_SECRET:         ${JWT_SECRET:-CHANGE_IN_PRODUCTION}
@@ -42,16 +51,9 @@ services:
 
     restart: unless-stopped
 
-    # Simple health-check: hits the /health endpoint every 30 s
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 20s
-
-volumes:
-  api_data:
-    driver: local
-  api_logs:
-    driver: local
