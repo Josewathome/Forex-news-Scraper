@@ -67,6 +67,10 @@ jobs:
           B64_PASS=$(printf '%s' '${{ secrets.DASHBOARD_PASSWORD }}' | base64 -w 0)
           B64_JWT=$(printf '%s' '${{ secrets.JWT_SECRET }}' | base64 -w 0)
           B64_ENC=$(printf '%s' '${{ secrets.ENCRYPTION_KEY }}' | base64 -w 0)
+          B64_ENC=$(printf '%s' '${{ secrets.JWT_EXPIRY_HOURS }}' | base64 -w 0)
+          B64_ENC=$(printf '%s' '${{ secrets.DATA_DIR }}' | base64 -w 0)
+          B64_ENC=$(printf '%s' '${{ secrets.LOGS_DIR }}' | base64 -w 0)
+          B64_ENC=$(printf '%s' '${{ secrets.LOG_RETENTION_DAYS }}' | base64 -w 0)
 
           ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << ENDSSH
 
@@ -77,8 +81,11 @@ jobs:
           export DASHBOARD_PASSWORD="\$(echo '$B64_PASS' | base64 -d)"
           export JWT_SECRET="\$(echo '$B64_JWT' | base64 -d)"
           export ENCRYPTION_KEY="\$(echo '$B64_ENC' | base64 -d)"
-          export DATA_DIR=/app/data
-          export LOGS_DIR=/app/logs
+          export JWT_EXPIRY_HOURS="\$(echo '$B64_ENC' | base64 -d)"
+          export DATA_DIR="\$(echo '$B64_ENC' | base64 -d)"
+          export LOGS_DIR="\$(echo '$B64_ENC' | base64 -d)"
+          export LOG_RETENTION_DAYS="\$(echo '$B64_ENC' | base64 -d)"
+          
 
           echo "Pulling latest images..."
           docker compose pull
