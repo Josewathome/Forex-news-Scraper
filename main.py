@@ -122,7 +122,7 @@ db           = DatabaseManager(DB_PATH)
 key_manager  = APIKeyManager(db, ENCRYPTION_KEY)
 rate_limiter = RateLimiter()
 
-_PUBLIC_PREFIXES  = ("/auth/", "/", "/api/dashboard", "/health", "/docs", "/openapi")
+_PUBLIC_PREFIXES  = ("/auth/", "/api/dashboard", "/health", "/docs", "/openapi")
 _TRACKED_PREFIXES = ("/myfxbook", "/forexfactory", "/broker-spreads")
 
 
