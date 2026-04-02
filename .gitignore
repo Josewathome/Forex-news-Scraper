@@ -4,3 +4,11 @@ __pycache__
 *.__pycache__
 *.pyc
 /venv
+*.zip 
+/logs
+*.logs
+*/logs/*
+/data
+*.data
+*/data/*
+*.env

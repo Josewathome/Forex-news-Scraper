@@ -42,3 +42,10 @@ uvicorn==0.29.0
 uvloop==0.22.1
 watchfiles==1.1.1
 websockets==16.0
+
+
+
+
+securepipe>=0.1.0          # pip install securepipe
+cryptography>=42.0.0       # Fernet fallback – always installed
+aiosqlite>=0.20.0

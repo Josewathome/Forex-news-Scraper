@@ -1,63 +1,57 @@
-services:
+# docker-compose.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# Deploy with:
+#   docker compose up --build -d
+#
+# Secrets are injected via GitHub Actions / CI:
+#   DASHBOARD_USERNAME, DASHBOARD_PASSWORD, JWT_SECRET, ENCRYPTION_KEY
+#
+# Two named volumes provide persistence across restarts:
+#   api_data  – encrypted API keys  (data/api_keys.json)
+#   api_logs  – rotating request logs (logs/YYYY-MM-DD.json)
+# ─────────────────────────────────────────────────────────────────────────────
 
-  scraper:
+services:
+  forex-api:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime
-    container_name: econ_calendar_scraper
-    restart: unless-stopped
+    image: forex-api:latest
+    container_name: forex-api
 
     ports:
       - "8000:8000"
 
+    # ── Persistent volumes ─────────────────────────────────────────────── #
+    volumes:
+      - api_data:/app/data   # encrypted API keys survive restarts
+      - api_logs:/app/logs   # rolling request logs (3-day retention)
+
+    # ── Runtime env (override with deployment secrets) ─────────────────── #
     environment:
-      # Playwright must know where browsers are installed
-      PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright
+      DATA_DIR: /app/data
+      LOGS_DIR: /app/logs
 
-      # Python output unbuffered so logs appear immediately
-      PYTHONUNBUFFERED: "1"
+      # Provide these via GitHub Actions secrets / CI pipeline:
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME:-admin}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-changeme}
+      JWT_SECRET:         ${JWT_SECRET:-CHANGE_IN_PRODUCTION}
+      ENCRYPTION_KEY:     ${ENCRYPTION_KEY:-CHANGE_IN_PRODUCTION_32CHAR}
+      JWT_EXPIRY_HOURS:   ${JWT_EXPIRY_HOURS:-24}
+      LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-3}
 
-      # Timezone — ForexFactory times are displayed in this zone
-      TZ: America/New_York
+    restart: unless-stopped
 
-    # Chromium needs a larger shared memory space than Docker's 64 MB default.
-    # Without this it crashes on heavy pages.
-    shm_size: "1gb"
-
-    # Health check hits /health every 30s.
-    # Container is marked unhealthy if 3 consecutive checks fail.
+    # Simple health-check: hits the /health endpoint every 30 s
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s      # give the browser time to warm up before first check
+      start_period: 20s
 
-    # Resource limits — Chromium is memory-hungry
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: "2g"
-        reservations:
-          cpus: "0.5"
-          memory: "512m"
-
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "20m"
-        max-file: "5"
-
-    volumes:
-      # Optional: mount a local dir to persist logs outside the container
-      - ./logs:/app/logs
-
-    networks:
-      - scraper_net
-
-
-networks:
-  scraper_net:
-    driver: bridge
+volumes:
+  api_data:
+    driver: local
+  api_logs:
+    driver: local

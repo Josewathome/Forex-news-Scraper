@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOREX MONITOR // API DASHBOARD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── CSS Variables ─────────────────────────────────────────────────────── */
+:root {
+  --bg:            #06080f;
+  --bg-card:       #0a1020;
+  --bg-elevated:   #0e1729;
+  --bg-input:      #060d1a;
+  --bg-modal:      #0c1526;
+
+  --border:        rgba(56, 189, 248, 0.09);
+  --border-md:     rgba(56, 189, 248, 0.18);
+  --border-hi:     rgba(56, 189, 248, 0.35);
+
+  --green:         #00e87a;
+  --green-dim:     rgba(0, 232, 122, 0.12);
+  --green-glow:    rgba(0, 232, 122, 0.25);
+  --amber:         #f5a623;
+  --amber-dim:     rgba(245, 166, 35, 0.12);
+  --red:           #ff4757;
+  --red-dim:       rgba(255, 71, 87, 0.12);
+  --blue:          #38bdf8;
+  --blue-dim:      rgba(56, 189, 248, 0.1);
+
+  --text:          #dde5f0;
+  --text-2:        #6a7f96;
+  --text-3:        #2a3a4c;
+
+  --mono: 'JetBrains Mono', monospace;
+  --ui:   'Syne', sans-serif;
+
+  --radius: 6px;
+  --transition: 180ms ease;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--ui);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── Dot-grid background ─────────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle, var(--text-3) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: .5;
+}
+
+/* ── Page visibility ─────────────────────────────────────────────────────── */
+.page { position: relative; z-index: 1; }
+[hidden] { display: none !important; }
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/*  LOGIN                                                                     */
+/* ══════════════════════════════════════════════════════════════════════════ */
+#login-page {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+/* Ambient glow */
+#login-page::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%,
+    rgba(0,232,122,.06) 0%, transparent 70%);
+}
+
+.login-card {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 400px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: 12px;
+  padding: 48px 40px 40px;
+  box-shadow: 0 0 60px rgba(0,0,0,.6), 0 0 100px rgba(0,232,122,.04);
+}
+
+.login-logo {
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: .12em;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+.login-logo .hex { opacity: .7; }
+
+.login-sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .25em;
+  color: var(--text-2);
+  margin-bottom: 40px;
+}
+
+.login-form { display: flex; flex-direction: column; gap: 24px; }
+
+.field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .22em;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.field input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 11px 14px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.field input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-dim);
+}
+.field input::placeholder { color: var(--text-3); }
+
+.error-msg {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--red);
+  padding: 10px 12px;
+  background: var(--red-dim);
+  border: 1px solid rgba(255,71,87,.2);
+  border-radius: var(--radius);
+}
+
+#login-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--green);
+  border: none; border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  color: #03100a;
+  cursor: pointer;
+  transition: opacity var(--transition), transform var(--transition);
+}
+#login-btn:hover { opacity: .9; transform: translateY(-1px); }
+#login-btn:active { transform: translateY(0); }
+#login-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/*  DASHBOARD                                                                 */
+/* ══════════════════════════════════════════════════════════════════════════ */
+#dashboard-page { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  height: 58px;
+  background: rgba(6,8,15,.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 20px; }
+
+.logo {
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: .12em;
+  color: var(--green);
+}
+
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--green);
+  background: var(--green-dim);
+  border: 1px solid rgba(0,232,122,.2);
+  border-radius: 3px;
+  padding: 3px 8px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 var(--green-glow); }
+  50%      { opacity: .7; box-shadow: 0 0 0 5px transparent; }
+}
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.ts-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-2);
+  letter-spacing: .06em;
+}
+
+.hdr-btn {
+  background: transparent;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.hdr-btn:hover { border-color: var(--border-hi); color: var(--text); }
+.hdr-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+/* ── Main content wrapper ─────────────────────────────────────────────────── */
+.main { flex: 1; padding: 28px 32px 48px; max-width: 1440px; width: 100%; margin: 0 auto; }
+
+/* ── Summary chips ────────────────────────────────────────────────────────── */
+.summary-bar { display: flex; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; }
+
+.stat-chip {
+  flex: 1; min-width: 160px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.stat-chip-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+}
+.stat-chip-val {
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+/* ── Section headers ──────────────────────────────────────────────────────── */
+.section-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: var(--text-2);
+  padding-left: 10px;
+  border-left: 2px solid var(--blue);
+}
+
+/* ── Endpoint cards grid ──────────────────────────────────────────────────── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.endpoint-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 22px 18px;
+  position: relative; overflow: hidden;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.endpoint-card:hover { border-color: var(--border-md); transform: translateY(-2px); }
+
+/* Left accent bar */
+.endpoint-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent-color, var(--blue));
+}
+.endpoint-card.ok::before    { --accent-color: var(--green); }
+.endpoint-card.warn::before  { --accent-color: var(--amber); }
+.endpoint-card.error::before { --accent-color: var(--red); }
+
+.card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-source-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .15em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+.card-source-badge.ok    { color: var(--green); background: var(--green-dim); border-color: rgba(0,232,122,.2); }
+.card-source-badge.warn  { color: var(--amber); background: var(--amber-dim); border-color: rgba(245,166,35,.2); }
+.card-source-badge.error { color: var(--red);   background: var(--red-dim);   border-color: rgba(255,71,87,.2); }
+
+.card-name {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 3px;
+}
+.card-path {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-2);
+}
+
+.card-total {
+  font-family: var(--mono);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 3px;
+  color: var(--text);
+  letter-spacing: -.02em;
+}
+.card-total-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+
+.card-breakdown {
+  display: flex; gap: 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.count-ok     { color: var(--green); }
+.count-client { color: var(--amber); }
+.count-server { color: var(--red); }
+.card-breakdown-labels {
+  display: flex;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: var(--text-3);
+  margin-top: -6px;
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  height: 3px;
+  background: rgba(255,255,255,.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.progress-fill {
+  height: 100%; border-radius: 2px;
+  transition: width .6s ease;
+}
+.progress-fill.ok    { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
+.progress-fill.warn  { background: var(--amber); }
+.progress-fill.error { background: var(--red); }
+
+.card-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--text-2);
+}
+
+/* ── API Keys table ───────────────────────────────────────────────────────── */
+.table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.keys-table {
+  width: 100%; border-collapse: collapse;
+}
+.keys-table th {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+  padding: 12px 20px;
+  text-align: left;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+.keys-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.keys-table tr:last-child td { border-bottom: none; }
+.keys-table tr:hover td { background: rgba(56,189,248,.03); }
+
+.key-name { font-weight: 600; font-family: var(--mono); font-size: 13px; }
+.key-date { font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+.key-limit {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--blue);
+  background: var(--blue-dim);
+  border: 1px solid rgba(56,189,248,.15);
+  border-radius: 3px;
+  padding: 2px 8px;
+  display: inline-block;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: .12em;
+}
+
+.gen-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--green-dim);
+  border: 1px solid rgba(0,232,122,.25);
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  color: var(--green);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.gen-btn:hover { background: rgba(0,232,122,.18); border-color: rgba(0,232,122,.4); }
+
+.del-btn {
+  background: transparent;
+  border: 1px solid rgba(255,71,87,.2);
+  border-radius: var(--radius);
+  padding: 5px 12px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: rgba(255,71,87,.6);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.del-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+
+/* ── Modal ────────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  background: var(--bg-modal);
+  border: 1px solid var(--border-md);
+  border-radius: 10px;
+  padding: 36px 36px 30px;
+  width: 100%; max-width: 440px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  animation: slide-up .2s ease;
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .22em;
+  color: var(--text-2);
+  margin-bottom: 24px;
+}
+
+.modal-field { margin-bottom: 18px; }
+.modal-field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+  margin-bottom: 7px;
+}
+.modal-field input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 10px 13px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.modal-field input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-dim);
+}
+
+.modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+.modal-btn {
+  flex: 1; padding: 11px;
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+}
+.modal-btn.primary {
+  background: var(--green);
+  color: #03100a;
+  border-color: var(--green);
+}
+.modal-btn.primary:hover { opacity: .9; }
+.modal-btn.primary:disabled { opacity: .4; cursor: not-allowed; }
+.modal-btn.secondary {
+  background: transparent;
+  color: var(--text-2);
+  border-color: var(--border-md);
+}
+.modal-btn.secondary:hover { border-color: var(--border-hi); color: var(--text); }
+
+/* Generated key display */
+.key-reveal {
+  background: var(--bg-input);
+  border: 1px solid rgba(0,232,122,.2);
+  border-radius: var(--radius);
+  padding: 13px;
+  margin-bottom: 14px;
+}
+.key-reveal-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  word-break: break-all;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+.copy-btn {
+  background: transparent;
+  border: 1px solid rgba(0,232,122,.25);
+  border-radius: var(--radius);
+  padding: 5px 12px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--green);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.copy-btn:hover { background: var(--green-dim); }
+
+.key-warning {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--amber);
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,.2);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  line-height: 1.5;
+}
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 28px; right: 28px;
+  z-index: 300;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  animation: toast-in .2s ease;
+  max-width: 320px;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.toast.ok    { background: var(--green-dim);  border-color: rgba(0,232,122,.25); color: var(--green); }
+.toast.error { background: var(--red-dim);    border-color: rgba(255,71,87,.25); color: var(--red); }
+.toast.info  { background: var(--blue-dim);   border-color: rgba(56,189,248,.25); color: var(--blue); }
+
+/* ── Loading skeleton ─────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg,
+    var(--bg-elevated) 25%,
+    rgba(56,189,248,.05) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer { to { background-position: -400% 0; } }
+.skel-card { height: 180px; }
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-2); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  header { padding: 0 16px; }
+  .main { padding: 20px 16px 40px; }
+  .hdr-btn .label { display: none; }
+  .cards-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  LOGIN PAGE                                                            -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="login-page" class="page">
+  <div class="login-card">
+    <div class="login-logo">⬡ FOREX MONITOR</div>
+    <div class="login-sub">API MONITORING &amp; CONTROL SYSTEM</div>
+
+    <div class="login-form">
+      <div class="field">
+        <label>USERNAME</label>
+        <input type="text" id="username" autocomplete="username" placeholder="admin" spellcheck="false">
+      </div>
+      <div class="field">
+        <label>PASSWORD</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <div id="login-error" class="error-msg" hidden></div>
+      <button id="login-btn" onclick="doLogin()">AUTHENTICATE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  DASHBOARD                                                             -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="dashboard-page" class="page" hidden>
+
+  <header>
+    <div class="header-left">
+      <span class="logo">⬡ FOREX MONITOR</span>
+      <span class="live-badge">
+        <span class="live-dot"></span>LIVE
+      </span>
+    </div>
+    <div class="header-right">
+      <span class="ts-label" id="last-updated"></span>
+      <button class="hdr-btn" onclick="loadAll()">↺ <span class="label">REFRESH</span></button>
+      <button class="hdr-btn danger" onclick="logout()">↩ <span class="label">LOGOUT</span></button>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- Summary bar -->
+    <div class="summary-bar">
+      <div class="stat-chip">
+        <div class="stat-chip-label">REQUESTS TODAY</div>
+        <div class="stat-chip-val" id="total-today">—</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-label">ACTIVE API KEYS</div>
+        <div class="stat-chip-val" id="active-keys">—</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-label">LOG RETENTION</div>
+        <div class="stat-chip-val" style="color: var(--amber)">3 DAYS</div>
+      </div>
+    </div>
+
+    <!-- Endpoint monitoring -->
+    <div class="section-hdr">
+      <span class="section-title">ENDPOINT MONITORING</span>
+    </div>
+    <div id="cards-grid" class="cards-grid">
+      <!-- skeleton -->
+      <div class="endpoint-card skeleton skel-card"></div>
+      <div class="endpoint-card skeleton skel-card"></div>
+      <div class="endpoint-card skeleton skel-card"></div>
+    </div>
+
+    <!-- API Key management -->
+    <div class="section-hdr" style="margin-top: 12px;">
+      <span class="section-title">API KEY MANAGEMENT</span>
+      <button class="gen-btn" onclick="openCreateModal()">
+        <span>+</span> GENERATE KEY
+      </button>
+    </div>
+    <div class="table-wrap">
+      <table class="keys-table">
+        <thead>
+          <tr>
+            <th>KEY NAME</th>
+            <th>CREATED</th>
+            <th>RATE LIMIT</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="keys-tbody">
+          <tr><td colspan="4" class="empty-state">LOADING KEYS…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  MODAL                                                                 -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="modal-overlay" class="modal-overlay" hidden onclick="handleOverlayClick(event)">
+  <div id="modal-box" class="modal">
+    <!-- dynamic -->
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" hidden></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!--  JAVASCRIPT                                                            -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── State ─────────────────────────────────────────────────────────────── //
+let _jwt       = null;
+let _refreshId = null;
+const REFRESH_MS = 30_000;
+
+// ── Bootstrap ─────────────────────────────────────────────────────────── //
+document.addEventListener('DOMContentLoaded', () => {
+  const stored = sessionStorage.getItem('fxm_jwt');
+  if (stored) {
+    _jwt = stored;
+    showDashboard();
+  } else {
+    showLogin();
+  }
+
+  // Enter key on login
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('username').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('password').focus();
+  });
+});
+
+// ── Auth ──────────────────────────────────────────────────────────────── //
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (!username || !password) {
+    showLoginError('Please enter username and password.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'AUTHENTICATING…';
+  errEl.hidden = true;
+
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Authentication failed.');
+
+    _jwt = data.access_token;
+    sessionStorage.setItem('fxm_jwt', _jwt);
+    showDashboard();
+  } catch (e) {
+    showLoginError(e.message);
+    btn.disabled = false;
+    btn.textContent = 'AUTHENTICATE';
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = '⚠ ' + msg;
+  el.hidden = false;
+}
+
+function logout() {
+  clearInterval(_refreshId);
+  _jwt = null;
+  sessionStorage.removeItem('fxm_jwt');
+  showLogin();
+}
+
+// ── Page transitions ──────────────────────────────────────────────────── //
+function showLogin() {
+  document.getElementById('dashboard-page').hidden = true;
+  document.getElementById('login-page').hidden = false;
+  document.getElementById('login-error').hidden = true;
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'AUTHENTICATE';
+}
+
+function showDashboard() {
+  document.getElementById('login-page').hidden = true;
+  document.getElementById('dashboard-page').hidden = false;
+  loadAll();
+  clearInterval(_refreshId);
+  _refreshId = setInterval(loadAll, REFRESH_MS);
+}
+
+// ── API helpers ───────────────────────────────────────────────────────── //
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${_jwt}`,
+      ...(opts.headers || {}),
+    },
+  });
+  if (res.status === 401) {
+    logout();
+    throw new Error('Session expired – please log in again.');
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || data.error || 'Request failed');
+  return data;
+}
+
+// ── Load everything ───────────────────────────────────────────────────── //
+async function loadAll() {
+  await Promise.allSettled([loadStats(), loadKeys()]);
+  document.getElementById('last-updated').textContent =
+    'UPDATED ' + new Date().toLocaleTimeString([], { hour12: false });
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────── //
+async function loadStats() {
+  try {
+    const data = await apiFetch('/api/dashboard/stats');
+    document.getElementById('total-today').textContent =
+      (data.summary?.total_today ?? 0).toLocaleString();
+    document.getElementById('active-keys').textContent =
+      (data.summary?.active_keys ?? 0).toLocaleString();
+    renderCards(data.stats || []);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function statusClass(total, success, serverErrors) {
+  // Card accent colour is based on server error rate only.
+  // Client errors (bad params) are the caller's fault, not ours.
+  if (total === 0) return 'info';
+  const serverRate = serverErrors / total;
+  if (serverRate === 0)    return 'ok';
+  if (serverRate <= 0.05)  return 'warn';
+  return 'error';
+}
+
+function successRate(total, success) {
+  if (total === 0) return '—';
+  return Math.round((success / total) * 100) + '%';
+}
+
+function timeAgo(iso) {
+  if (!iso) return 'NEVER';
+  const diff = Date.now() - new Date(iso).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return s + 's AGO';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm AGO';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h AGO';
+  return Math.floor(h / 24) + 'd AGO';
+}
+
+function renderCards(stats) {
+  const grid = document.getElementById('cards-grid');
+  if (!stats.length) {
+    grid.innerHTML = '<div class="empty-state" style="padding:40px;grid-column:1/-1">NO ENDPOINT DATA YET</div>';
+    return;
+  }
+
+  grid.innerHTML = stats.map(s => {
+    const clientErr = s.client_errors ?? 0;
+    const serverErr = s.server_errors ?? 0;
+    const cls    = statusClass(s.total, s.success, serverErr);
+    const rate   = s.total > 0 ? Math.round((s.success / s.total) * 100) : 0;
+    const width  = rate;
+    const last   = timeAgo(s.last_called);
+
+    // Progress bar shows success vs everything else
+    // Client errors get amber slice, server errors get red slice
+    const clientPct = s.total > 0 ? Math.round((clientErr / s.total) * 100) : 0;
+    const serverPct = s.total > 0 ? Math.round((serverErr / s.total) * 100) : 0;
+
+    return `
+<div class="endpoint-card ${cls}">
+  <div class="card-top">
+    <div>
+      <div class="card-name">${escHtml(s.name)}</div>
+      <div class="card-path">${escHtml(s.endpoint)}</div>
+    </div>
+    <span class="card-source-badge ${cls}">${successRate(s.total, s.success)}</span>
+  </div>
+
+  <div class="card-total">${s.total.toLocaleString()}</div>
+  <div class="card-total-label">TOTAL REQUESTS (ALL-TIME)</div>
+
+  <div class="card-breakdown">
+    <span class="count-ok"  title="Successful responses (2xx)">✓ ${s.success.toLocaleString()}</span>
+    <span style="color:var(--text-3)">│</span>
+    <span class="count-client" title="Bad parameters, wrong input (4xx)">⚠ ${clientErr.toLocaleString()}</span>
+    <span style="color:var(--text-3)">│</span>
+    <span class="count-server" title="Scraper / server failures (5xx)">✗ ${serverErr.toLocaleString()}</span>
+    ${s.avg_ms != null ? `<span style="color:var(--text-2);margin-left:auto">${s.avg_ms}ms AVG</span>` : ''}
+  </div>
+
+  <div class="card-breakdown-labels">
+    <span>SUCCESS</span>
+    <span style="margin-left:auto;margin-right:0">CLIENT ERR</span>
+    <span style="margin-left:8px">SERVER ERR</span>
+  </div>
+
+  <div class="progress-track" style="overflow:visible">
+    <div style="display:flex;height:3px;border-radius:2px;overflow:hidden;width:100%">
+      <div style="width:${width}%;background:var(--green);box-shadow:0 0 6px var(--green-glow);transition:width .6s ease"></div>
+      <div style="width:${clientPct}%;background:var(--amber);transition:width .6s ease"></div>
+      <div style="flex:1;background:rgba(255,255,255,.06)"></div>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    <span class="card-rate">${rate}% SUCCESS RATE</span>
+    <span class="card-last">LAST: ${last}</span>
+  </div>
+</div>`;
+  }).join('');
+}
+
+// ── Keys ──────────────────────────────────────────────────────────────── //
+async function loadKeys() {
+  try {
+    const data = await apiFetch('/api/dashboard/keys');
+    renderKeys(data.keys || []);
+    document.getElementById('active-keys').textContent =
+      (data.keys || []).length.toLocaleString();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function renderKeys(keys) {
+  const tbody = document.getElementById('keys-tbody');
+  if (!keys.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">NO API KEYS — GENERATE ONE BELOW</td></tr>';
+    return;
+  }
+  tbody.innerHTML = keys.map(k => {
+    const date = k.created_at ? new Date(k.created_at).toLocaleDateString() : '—';
+    return `
+<tr>
+  <td><span class="key-name">${escHtml(k.name)}</span></td>
+  <td><span class="key-date">${date}</span></td>
+  <td><span class="key-limit">${k.rate_limit} REQ/MIN</span></td>
+  <td><button class="del-btn" onclick="deleteKey('${escHtml(k.name)}')">DELETE</button></td>
+</tr>`;
+  }).join('');
+}
+
+async function deleteKey(name) {
+  if (!confirm(`Delete key "${name}"? This cannot be undone.`)) return;
+  try {
+    await apiFetch(`/api/dashboard/keys/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    toast(`Key "${name}" deleted.`, 'ok');
+    loadKeys();
+    loadStats();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ── Create key modal ──────────────────────────────────────────────────── //
+function openCreateModal() {
+  showModal(`
+    <div class="modal-title">GENERATE NEW API KEY</div>
+    <div class="modal-field">
+      <label>KEY LABEL</label>
+      <input type="text" id="m-name" placeholder="e.g. production-v2" spellcheck="false" autofocus>
+    </div>
+    <div class="modal-field">
+      <label>RATE LIMIT (requests / 60 s)</label>
+      <input type="number" id="m-limit" value="60" min="1" max="10000">
+    </div>
+    <div id="m-error" class="error-msg" style="margin-top:0" hidden></div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal()">CANCEL</button>
+      <button class="modal-btn primary" id="m-gen-btn" onclick="submitCreateKey()">GENERATE</button>
+    </div>
+  `);
+  document.getElementById('m-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitCreateKey();
+  });
+}
+
+async function submitCreateKey() {
+  const nameEl  = document.getElementById('m-name');
+  const limitEl = document.getElementById('m-limit');
+  const errEl   = document.getElementById('m-error');
+  const genBtn  = document.getElementById('m-gen-btn');
+
+  const name  = nameEl.value.trim();
+  const limit = parseInt(limitEl.value, 10);
+
+  if (!name) { errEl.textContent = '⚠ Key label is required.'; errEl.hidden = false; return; }
+  if (!limit || limit < 1) { errEl.textContent = '⚠ Rate limit must be ≥ 1.'; errEl.hidden = false; return; }
+
+  genBtn.disabled = true;
+  genBtn.textContent = 'GENERATING…';
+  errEl.hidden = true;
+
+  try {
+    const data = await apiFetch('/api/dashboard/keys', {
+      method: 'POST',
+      body: JSON.stringify({ name, rate_limit: limit }),
+    });
+    showKeyReveal(data);
+    loadKeys();
+    loadStats();
+  } catch (e) {
+    errEl.textContent = '⚠ ' + e.message;
+    errEl.hidden = false;
+    genBtn.disabled = false;
+    genBtn.textContent = 'GENERATE';
+  }
+}
+
+function showKeyReveal(data) {
+  showModal(`
+    <div class="modal-title">KEY GENERATED ─ ${escHtml(data.name)}</div>
+    <div class="key-reveal">
+      <div class="key-reveal-val" id="raw-key-val">${escHtml(data.key)}</div>
+      <button class="copy-btn" onclick="copyKey()">⎘ COPY TO CLIPBOARD</button>
+    </div>
+    <div class="key-warning">
+      ⚠ This is the only time this key will be shown.
+      Copy it now and store it in a secure vault.
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" onclick="closeModal()">I HAVE SAVED THE KEY</button>
+    </div>
+  `);
+}
+
+function copyKey() {
+  const val = document.getElementById('raw-key-val')?.textContent;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    toast('Key copied to clipboard.', 'info');
+  }).catch(() => {
+    toast('Copy failed – please copy manually.', 'error');
+  });
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────────── //
+function showModal(html) {
+  document.getElementById('modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').hidden = false;
+  // Auto-focus first input
+  setTimeout(() => {
+    const first = document.querySelector('#modal-box input');
+    if (first) first.focus();
+  }, 50);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').hidden = true;
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────── //
+let _toastTimer = null;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────── //
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

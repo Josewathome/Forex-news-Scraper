@@ -16,24 +16,33 @@ STEALTH_SCRIPT = """
     window.chrome = { runtime: {} };
 """
 
+# Slightly different UA for the BG context so it looks like a different visitor
+BG_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/123.0.0.0 Safari/537.36"
+)
+
 
 class BrowserManager:
     """
-    Owns the single Chromium instance and three persistent pages:
-      ff_page  — ForexFactory calendar  (session cookie holder for API calls)
-      mfb_page — MyFxBook economic calendar
-      bg_page  — ForexFactory broker guide (broker spreads)
+    Owns the single Chromium instance with TWO separate browser contexts:
 
-    NOTE: bg_page is intentionally NOT pre-loaded at startup.
-    The broker guide scraper calls page.goto() itself on every live request
-    and handles its own wait_for_selector — so startup only needs the page
-    object to exist in a blank state.
+      _ctx     — shared context for ff_page (ForexFactory calendar) and
+                 mfb_page (MyFxBook calendar)
+
+      _bg_ctx  — isolated context exclusively for bg_page (ForexFactory
+                 broker guide).  Kept separate because ff_page and bg_page
+                 both hit forexfactory.com — sharing a context causes FF to
+                 detect multiple tabs from the same session and block the
+                 broker data XHR from completing.
     """
 
     def __init__(self) -> None:
-        self._playwright: Playwright     | None = None
-        self._browser:    Browser        | None = None
-        self._ctx:        BrowserContext | None = None
+        self._playwright: Playwright      | None = None
+        self._browser:    Browser         | None = None
+        self._ctx:        BrowserContext  | None = None   # FF + MFB
+        self._bg_ctx:     BrowserContext  | None = None   # BG only
 
         self.ff_page:  Page | None = None
         self.mfb_page: Page | None = None
@@ -62,6 +71,8 @@ class BrowserManager:
                 "--window-size=1280,900",
             ],
         )
+
+        # ── Shared context: FF calendar + MFB calendar ────────────────────────
         self._ctx = await self._browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -79,20 +90,43 @@ class BrowserManager:
                 ),
             },
         )
-
         await self._ctx.add_init_script(STEALTH_SCRIPT)
 
+        # ── Isolated context: BG broker guide only ────────────────────────────
+        # Different UA + fresh cookie jar = looks like a separate visitor to FF.
+        self._bg_ctx = await self._browser.new_context(
+            user_agent=BG_USER_AGENT,
+            viewport={"width": 1280, "height": 900},
+            java_script_enabled=True,
+            ignore_https_errors=True,
+            extra_http_headers={
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept": (
+                    "text/html,application/xhtml+xml,"
+                    "application/xml;q=0.9,image/webp,*/*;q=0.8"
+                ),
+            },
+        )
+        await self._bg_ctx.add_init_script(STEALTH_SCRIPT)
+
+        # ── Create pages ──────────────────────────────────────────────────────
         self.ff_page  = await self._ctx.new_page()
         self.mfb_page = await self._ctx.new_page()
-        self.bg_page  = await self._ctx.new_page()   # blank — scraper loads it on demand
+        self.bg_page  = await self._bg_ctx.new_page()   # isolated context
 
         await self._navigate_ff()
         await self._navigate_mfb()
-        # bg_page is intentionally left blank at startup — see class docstring
+        # bg_page left blank — scraper calls page.goto() on every live request
         logger.info("FF and MFB pages ready. BG page will load on first request.")
 
     async def stop(self) -> None:
         logger.info("Shutting down browser …")
+        for ctx in (self._ctx, self._bg_ctx):
+            try:
+                if ctx:
+                    await ctx.close()
+            except Exception as exc:
+                logger.warning("Context close error: %s", exc)
         try:
             if self._browser:
                 await self._browser.close()
@@ -125,19 +159,15 @@ class BrowserManager:
             await self._recover_mfb()
 
     async def reload_bg(self) -> None:
-        """
-        bg_page health check — only verifies the page object is alive.
-        The scraper always does a fresh page.goto() per request, so we
-        never need to pre-load or re-navigate here.
-        """
+        """bg_page health-check — just ensures the page object is alive."""
         try:
             if self.bg_page is None or self.bg_page.is_closed():
                 logger.warning("BG page object gone, recreating …")
-                self.bg_page = await self._ctx.new_page()
+                self.bg_page = await self._bg_ctx.new_page()
         except Exception as exc:
             logger.warning("BG page check failed (%s), recreating …", exc)
             try:
-                self.bg_page = await self._ctx.new_page()
+                self.bg_page = await self._bg_ctx.new_page()
             except Exception as inner:
                 logger.error("BG page recreation failed: %s", inner)
 
@@ -192,6 +222,6 @@ class BrowserManager:
             await self.bg_page.close()
         except Exception:
             pass
-        self.bg_page = await self._ctx.new_page()
-        # No navigation here — scraper handles its own goto() per request
-        logger.debug("BG page recreated (blank) — scraper will load on next request.")
+        # Always recreate from the isolated context
+        self.bg_page = await self._bg_ctx.new_page()
+        logger.debug("BG page recreated in isolated context — scraper loads on next request.")
