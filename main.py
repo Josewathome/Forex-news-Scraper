@@ -122,7 +122,7 @@ db           = DatabaseManager(DB_PATH)
 key_manager  = APIKeyManager(db, ENCRYPTION_KEY)
 rate_limiter = RateLimiter()
 
-_PUBLIC_PREFIXES  = ("/auth/", "/dashboard", "/api/dashboard", "/health", "/docs", "/openapi")
+_PUBLIC_PREFIXES  = ("/auth/", "/", "/api/dashboard", "/health", "/docs", "/openapi")
 _TRACKED_PREFIXES = ("/myfxbook", "/forexfactory", "/broker-spreads")
 
 
@@ -327,7 +327,7 @@ async def login(request: Request, body: LoginRequest):
 
 # ── Dashboard HTML ─────────────────────────────────────────────────────────── #
 
-@app.get("/dashboard", response_class=HTMLResponse, tags=["Dashboard"])
+@app.get("/", response_class=HTMLResponse, tags=["Dashboard"])
 async def serve_dashboard():
     p = Path("templates/dashboard.html")
     return HTMLResponse(p.read_text() if p.exists() else "<h1>template missing</h1>")
