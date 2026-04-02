@@ -86,7 +86,6 @@ jobs:
           export LOGS_DIR="\$(echo '$B64_ENC' | base64 -d)"
           export LOG_RETENTION_DAYS="\$(echo '$B64_ENC' | base64 -d)"
           
-
           echo "Pulling latest images..."
           docker compose pull
 
