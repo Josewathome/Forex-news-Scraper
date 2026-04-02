@@ -50,6 +50,7 @@ jobs:
             -e "ssh -p ${{ secrets.SSH_PORT }}" \
             --exclude ".git" \
             --exclude ".env" \
+            --exclude "node_modules" \
             --exclude "logs/" \
             --exclude "data/" \
             ./ \
@@ -64,13 +65,6 @@ jobs:
 
           cd /home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
-          export DASHBOARD_USERNAME="${{ secrets.DASHBOARD_USERNAME }}"
-          export DASHBOARD_PASSWORD="${{ secrets.DASHBOARD_PASSWORD }}"
-          export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-          export ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}"
-          export DATA_DIR=/app/data
-          export LOGS_DIR=/app/logs
-
           echo "Pulling latest images..."
           docker compose pull
 
@@ -78,6 +72,12 @@ jobs:
           docker compose build
 
           echo "Starting services..."
+          DASHBOARD_USERNAME="${{ secrets.DASHBOARD_USERNAME }}" \
+          DASHBOARD_PASSWORD="${{ secrets.DASHBOARD_PASSWORD }}" \
+          JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+          ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}" \
+          DATA_DIR=/app/data \
+          LOGS_DIR=/app/logs \
           docker compose up -d
 
           echo "Deployment complete"
