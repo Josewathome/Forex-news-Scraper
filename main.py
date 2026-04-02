@@ -44,6 +44,12 @@ JWT_ALGORITHM       = "HS256"
 JWT_EXPIRY_HOURS    = int(os.getenv("JWT_EXPIRY_HOURS",   "24"))
 LOG_RETENTION_DAYS  = int(os.getenv("LOG_RETENTION_DAYS", "3"))
 
+# Max login attempts per IP before a 429 is returned.
+# 5 attempts / 60 seconds is enough for a legitimate user who mistyped
+# their password; it makes brute-forcing impractical.
+LOGIN_RATE_LIMIT    = int(os.getenv("LOGIN_RATE_LIMIT",    "5"))
+LOGIN_RATE_WINDOW   = int(os.getenv("LOGIN_RATE_WINDOW",  "60"))  # seconds
+
 # ── Logging  (identical to original) ─────────────────────────────────────── #
 
 _LOG_DIR = str(LOGS_DIR)
@@ -268,15 +274,50 @@ async def unhandled(request: Request, exc: Exception):
 
 # ── Auth ──────────────────────────────────────────────────────────────────── #
 
+def _client_ip(request: Request) -> str:
+    """
+    Return the real client IP, respecting a reverse-proxy X-Forwarded-For header.
+
+    If the app sits behind nginx / a load balancer, the outermost proxy appends
+    the real client IP as the first value in X-Forwarded-For.
+    Fall back to request.client.host when the header is absent (direct connection).
+    """
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
 
 
 @app.post("/auth/login", tags=["Dashboard Auth"])
-async def login(body: LoginRequest):
+async def login(request: Request, body: LoginRequest):
+    ip = _client_ip(request)
+
+    # Rate-limit login attempts by IP to block brute-force attacks.
+    # Uses the same RateLimiter as API keys but with a "login:{ip}" key
+    # so there is no cross-contamination with API key buckets.
+    if not rate_limiter.is_allowed(f"login:{ip}", LOGIN_RATE_LIMIT, LOGIN_RATE_WINDOW):
+        logger.warning("Login rate-limit hit from IP %s", ip)
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Too many login attempts. "
+                f"Maximum {LOGIN_RATE_LIMIT} attempts per {LOGIN_RATE_WINDOW} seconds."
+            ),
+            headers={"Retry-After": str(LOGIN_RATE_WINDOW)},
+        )
+
     if body.username != DASHBOARD_USERNAME or body.password != DASHBOARD_PASSWORD:
+        # Log the failure so it is visible in app.log.
+        # We do NOT hint whether the username or password was wrong.
+        logger.warning("Failed login attempt for user '%s' from IP %s", body.username, ip)
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    logger.info("Successful login for user '%s' from IP %s", body.username, ip)
     return {
         "access_token": _create_jwt(body.username),
         "token_type":   "bearer",
