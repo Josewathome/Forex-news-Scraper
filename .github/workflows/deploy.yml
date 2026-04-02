@@ -49,7 +49,7 @@ jobs:
           rsync -avz \
             -e "ssh -p ${{ secrets.SSH_PORT }}" \
             --exclude ".git" \
-            --exclude "node_modules" \
+            --exclude ".env" \
             --exclude "logs/" \
             --exclude "data/" \
             ./ \
@@ -60,16 +60,16 @@ jobs:
       # -----------------------------
       - name: Deploy application
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << 'ENDSSH'
+          ssh -p ${{ secrets.SSH_PORT }} root@${{ secrets.SSH_HOST }} << ENDSSH
 
           cd /home/gre8/forexnews.gre8i.com/Forex-news-Scraper
 
-          export DASHBOARD_USERNAME="${DASHBOARD_USERNAME}"
-          export DASHBOARD_PASSWORD="${DASHBOARD_PASSWORD}"
-          export JWT_SECRET="${JWT_SECRET}"
-          export ENCRYPTION_KEY="${ENCRYPTION_KEY}"
-          export DATA_DIR="data"
-          export LOGS_DIR="logs"
+          export DASHBOARD_USERNAME="${{ secrets.DASHBOARD_USERNAME }}"
+          export DASHBOARD_PASSWORD="${{ secrets.DASHBOARD_PASSWORD }}"
+          export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+          export ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}"
+          export DATA_DIR=/app/data
+          export LOGS_DIR=/app/logs
 
           echo "Pulling latest images..."
           docker compose pull
@@ -82,8 +82,3 @@ jobs:
 
           echo "Deployment complete"
           ENDSSH
-        env:
-          DASHBOARD_USERNAME: ${{ secrets.DASHBOARD_USERNAME }}
-          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
