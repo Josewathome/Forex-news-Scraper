@@ -4,16 +4,13 @@
 #   docker compose up --build -d
 #
 # Secrets are injected via GitHub Actions / CI:
-#   DASHBOARD_USERNAME, DASHBOARD_PASSWORD, JWT_SECRET, ENCRYPTION_KEY,
-#   DATA_DIR, LOGS_DIR
+#   DASHBOARD_USERNAME, DASHBOARD_PASSWORD, JWT_SECRET, ENCRYPTION_KEY
 #
-# Two bind mounts provide persistence across restarts AND direct host access:
-#   ${DATA_DIR} → /app/data  – SQLite database (forex_api.db)
-#   ${LOGS_DIR} → /app/logs  – rotating application logs (app.log)
-#
-# DATA_DIR and LOGS_DIR must be absolute paths on the host, e.g.:
-#   DATA_DIR=/home/gre8/forexnews.gre8i.com/Forex-news-Scraper/data
-#   LOGS_DIR=/home/gre8/forexnews.gre8i.com/Forex-news-Scraper/logs
+# Two bind mounts provide persistence across restarts AND direct host access.
+# Paths are relative to this file — they resolve to the project root on the
+# host, sitting alongside main.py:
+#   ./data  →  /app/data   (SQLite database)
+#   ./logs  →  /app/logs   (rotating application logs)
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -27,16 +24,12 @@ services:
     ports:
       - "8087:8000"
 
-    # ── Bind mounts — host paths come from deployment env vars ────────────── #
-    # The left side (${VAR}) is the absolute host path.
-    # The right side is always the fixed container-internal path.
+    # ── Bind mounts — relative to this docker-compose.yml file ────────────── #
     volumes:
-      - ${DATA_DIR}:/app/data
-      - ${LOGS_DIR}:/app/logs
+      - ./data:/app/data
+      - ./logs:/app/logs
 
     # ── Runtime env ───────────────────────────────────────────────────────── #
-    # DATA_DIR / LOGS_DIR here are the container-internal paths — always fixed.
-    # The host-side paths are handled by the volume bind mounts above.
     environment:
       DATA_DIR: /app/data
       LOGS_DIR: /app/logs

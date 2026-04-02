@@ -638,12 +638,285 @@ header {
 ::-webkit-scrollbar-thumb { background: var(--text-3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-2); }
 
+/* ══════════════════════════════════════════════════════════════════════════ */
+/*  API DOCUMENTATION                                                         */
+/* ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Doc accordion wrapper ─────────────────────────────────────────────── */
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 48px;
+}
+
+/* ── Individual doc item ───────────────────────────────────────────────── */
+.doc-item { border-bottom: 1px solid var(--border); }
+.doc-item:last-child { border-bottom: none; }
+
+/* ── Clickable header row ──────────────────────────────────────────────── */
+.doc-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition);
+}
+.doc-header:hover { background: var(--bg-elevated); }
+.doc-item.open .doc-header { background: var(--bg-elevated); }
+
+/* GET badge */
+.method-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  padding: 3px 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.method-badge.get {
+  color: var(--green);
+  background: var(--green-dim);
+  border: 1px solid rgba(0,232,122,.25);
+}
+
+/* Endpoint path shown in header */
+.doc-header-path {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--blue);
+  letter-spacing: .03em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Short description in header */
+.doc-header-desc {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-2);
+  letter-spacing: .05em;
+  flex-shrink: 0;
+}
+
+/* Chevron */
+.doc-chevron {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-3);
+  transition: transform 240ms ease, color var(--transition);
+}
+.doc-chevron svg { width: 12px; height: 12px; }
+.doc-item.open .doc-chevron { transform: rotate(180deg); color: var(--blue); }
+
+/* ── Collapsible body ──────────────────────────────────────────────────── */
+.doc-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.doc-item.open .doc-body { max-height: 2400px; }
+
+.doc-body-inner {
+  padding: 0 24px 28px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Doc sub-sections ──────────────────────────────────────────────────── */
+.doc-section { margin-top: 24px; }
+
+.doc-section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .22em;
+  color: var(--text-2);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Full URL block */
+.doc-url-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 11px 14px;
+}
+.doc-url-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  flex: 1;
+  word-break: break-all;
+  line-height: 1.6;
+}
+.doc-url-text .url-path  { color: var(--blue); }
+.doc-url-text .url-query { color: var(--amber); }
+.doc-copy-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 5px 11px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.doc-copy-btn:hover { border-color: var(--green); color: var(--green); }
+.doc-copy-btn.copied { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+/* Description text */
+.doc-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+/* ── Parameters table ──────────────────────────────────────────────────── */
+.param-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.param-table thead tr {
+  background: var(--bg-elevated);
+}
+.param-table th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+.param-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.param-table tr:last-child td { border-bottom: none; }
+.param-table tr:hover td { background: rgba(56,189,248,.02); }
+
+.param-name {
+  color: var(--blue);
+  white-space: nowrap;
+}
+.param-type {
+  color: var(--amber);
+  white-space: nowrap;
+}
+.param-req {
+  white-space: nowrap;
+}
+.param-req.yes { color: var(--green); }
+.param-req.no  { color: var(--text-3); }
+.param-multi {
+  display: inline-block;
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: var(--amber);
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,166,35,.2);
+  border-radius: 2px;
+  padding: 1px 5px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.param-desc { color: var(--text-2); }
+.param-example {
+  color: var(--text-3);
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+/* ── Headers table re-uses param-table styles ─────────────────────────── */
+
+/* ── Code blocks ───────────────────────────────────────────────────────── */
+.code-wrap {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+.code-lang {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: var(--text-2);
+}
+.code-copy-btn {
+  background: transparent;
+  border: 1px solid var(--border-md);
+  border-radius: 3px;
+  padding: 3px 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.code-copy-btn:hover { border-color: var(--green); color: var(--green); }
+.code-copy-btn.copied { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+.code-pre {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* JSON syntax highlighting tokens */
+.jt-key    { color: var(--text); }
+.jt-str    { color: var(--amber); }
+.jt-num    { color: var(--blue); }
+.jt-bool   { color: var(--green); }
+.jt-null   { color: var(--text-2); }
+.jt-brace  { color: var(--text-3); }
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   header { padding: 0 16px; }
   .main { padding: 20px 16px 40px; }
   .hdr-btn .label { display: none; }
   .cards-grid { grid-template-columns: 1fr; }
+  .doc-header-desc { display: none; }
+  .doc-url-block { flex-direction: column; align-items: flex-start; }
+  .param-table th:nth-child(4),
+  .param-table td:nth-child(4) { display: none; }
 }
 </style>
 </head>
@@ -743,8 +1016,537 @@ header {
       </table>
     </div>
 
-  </div>
-</div>
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!--  API DOCUMENTATION                                                 -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <div class="section-hdr" style="margin-top: 36px;">
+      <span class="section-title">API DOCUMENTATION</span>
+    </div>
+
+    <div class="doc-list">
+
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <!-- 1. MyFxBook Events                                               -->
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <div class="doc-item" id="doc-myfxbook">
+        <div class="doc-header" onclick="toggleDoc('doc-myfxbook')">
+          <span class="method-badge get">GET</span>
+          <span class="doc-header-path">/myfxbook/events</span>
+          <span class="doc-header-desc">ECONOMIC CALENDAR — MYFXBOOK</span>
+          <span class="doc-chevron">
+            <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <div class="doc-body">
+          <div class="doc-body-inner">
+
+            <!-- Description -->
+            <div class="doc-section">
+              <div class="doc-section-label">DESCRIPTION</div>
+              <p class="doc-desc">Returns scheduled economic events from the MyFxBook calendar for one or more currencies over a date range. Responses are cached for 30 minutes. Repeat the <code style="color:var(--amber);font-family:var(--mono)">currency</code> parameter to request multiple currencies in a single call.</p>
+            </div>
+
+            <!-- Full URL -->
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE REQUEST URL</div>
+              <div class="doc-url-block">
+                <span class="doc-url-text">
+                  <span class="url-path">http://localhost:8000/myfxbook/events</span><span class="url-query">?currency=CNY&amp;currency=AUD&amp;start_date=2026-03-10&amp;end_date=2026-03-11</span>
+                </span>
+                <button class="doc-copy-btn" onclick="copyUrl(this, 'http://localhost:8000/myfxbook/events?currency=CNY&currency=AUD&start_date=2026-03-10&end_date=2026-03-11')">⎘ COPY</button>
+              </div>
+            </div>
+
+            <!-- Query Parameters -->
+            <div class="doc-section">
+              <div class="doc-section-label">QUERY PARAMETERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr>
+                      <th>PARAMETER</th>
+                      <th>TYPE</th>
+                      <th>REQUIRED</th>
+                      <th>DESCRIPTION &amp; EXAMPLE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">currency</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">ISO 4217 currency code. Repeat the parameter to filter by multiple currencies simultaneously.</div>
+                        <div class="param-example">e.g. currency=USD&amp;currency=EUR&amp;currency=CNY</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">start_date</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Start of the date range in YYYY-MM-DD format.</div>
+                        <div class="param-example">e.g. start_date=2026-03-10</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">end_date</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">End of the date range in YYYY-MM-DD format. Must be ≥ start_date.</div>
+                        <div class="param-example">e.g. end_date=2026-03-11</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Required Headers -->
+            <div class="doc-section">
+              <div class="doc-section-label">REQUIRED HEADERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr>
+                      <th>HEADER</th>
+                      <th>VALUE</th>
+                      <th>REQUIRED</th>
+                      <th>NOTES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">X-API-Key</span></td>
+                      <td><span class="param-type">sk-…</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td><span class="param-desc">Your API key. Alternatively pass as <code style="color:var(--amber);font-family:var(--mono)">?api_key=sk-…</code> query parameter.</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- cURL example -->
+            <div class="doc-section">
+              <div class="doc-section-label">CURL EXAMPLE</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">SHELL</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'curl-myfxbook')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="curl-myfxbook">curl -X GET \
+  "http://localhost:8000/myfxbook/events?currency=CNY&currency=AUD&start_date=2026-03-10&end_date=2026-03-11" \
+  -H "X-API-Key: sk-your-api-key-here"</pre>
+              </div>
+            </div>
+
+            <!-- Response -->
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE RESPONSE — 200 OK</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">JSON</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'resp-myfxbook')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="resp-myfxbook-raw" style="display:none">{
+    "start_date": "2026-03-10",
+    "end_date": "2026-03-11",
+    "timezone": "(GMT -12:00) International Date Line West",
+    "events": [
+        {
+            "time": "03:30",
+            "timezone": "(GMT -12:00) International Date Line West",
+            "currency": "AUD",
+            "impact": "low",
+            "event": "Building Permits YoY (Jan)",
+            "actual": "-15.7%",
+            "forecast": "-15.7%",
+            "previous": "1.1%",
+            "date": "2026-03-10"
+        },
+        {
+            "time": "03:00",
+            "timezone": "(GMT -12:00) International Date Line West",
+            "currency": "CNY",
+            "impact": "low",
+            "event": "National People's Congress",
+            "actual": null,
+            "forecast": null,
+            "previous": null,
+            "date": "2026-03-11"
+        }
+    ],
+    "source": "myfxbook",
+    "cached": false
+}</pre>
+                <pre class="code-pre" id="resp-myfxbook"></pre>
+              </div>
+            </div>
+
+            <!-- Response Fields -->
+            <div class="doc-section">
+              <div class="doc-section-label">RESPONSE FIELDS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>FIELD</th><th>TYPE</th><th>DESCRIPTION</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="param-name">start_date</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Echoed start of the requested date range.</span></td></tr>
+                    <tr><td><span class="param-name">end_date</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Echoed end of the requested date range.</span></td></tr>
+                    <tr><td><span class="param-name">timezone</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Timezone label that applies to all event times in this response.</span></td></tr>
+                    <tr><td><span class="param-name">events[].time</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Scheduled time of the event (HH:MM, 24-hour).</span></td></tr>
+                    <tr><td><span class="param-name">events[].currency</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">ISO 4217 currency code the event belongs to.</span></td></tr>
+                    <tr><td><span class="param-name">events[].impact</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Market impact level: <code style="color:var(--green);font-family:var(--mono)">low</code> | <code style="color:var(--amber);font-family:var(--mono)">medium</code> | <code style="color:var(--red);font-family:var(--mono)">high</code>.</span></td></tr>
+                    <tr><td><span class="param-name">events[].actual</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Released figure. null if not yet published.</span></td></tr>
+                    <tr><td><span class="param-name">events[].forecast</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Analyst consensus estimate. null if unavailable.</span></td></tr>
+                    <tr><td><span class="param-name">events[].previous</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Prior period's released figure. null if unavailable.</span></td></tr>
+                    <tr><td><span class="param-name">cached</span></td><td><span class="param-type">boolean</span></td><td><span class="param-desc">true if this response was served from the 30-minute cache.</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <!-- 2. ForexFactory Events                                           -->
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <div class="doc-item" id="doc-forexfactory">
+        <div class="doc-header" onclick="toggleDoc('doc-forexfactory')">
+          <span class="method-badge get">GET</span>
+          <span class="doc-header-path">/forexfactory/events</span>
+          <span class="doc-header-desc">ECONOMIC CALENDAR — FOREXFACTORY</span>
+          <span class="doc-chevron">
+            <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <div class="doc-body">
+          <div class="doc-body-inner">
+
+            <div class="doc-section">
+              <div class="doc-section-label">DESCRIPTION</div>
+              <p class="doc-desc">Returns scheduled economic events from the ForexFactory calendar for one or more currencies on a specific date. All times are returned in UTC. Responses are cached for 30 minutes. Repeat the <code style="color:var(--amber);font-family:var(--mono)">currency</code> parameter for multiple currencies.</p>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE REQUEST URL</div>
+              <div class="doc-url-block">
+                <span class="doc-url-text">
+                  <span class="url-path">http://localhost:8000/forexfactory/events</span><span class="url-query">?currency=USD&amp;date=2026-03-30</span>
+                </span>
+                <button class="doc-copy-btn" onclick="copyUrl(this, 'http://localhost:8000/forexfactory/events?currency=USD&date=2026-03-30')">⎘ COPY</button>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">QUERY PARAMETERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr>
+                      <th>PARAMETER</th>
+                      <th>TYPE</th>
+                      <th>REQUIRED</th>
+                      <th>DESCRIPTION &amp; EXAMPLE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">currency</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">ISO 4217 currency code. Repeat to filter multiple currencies at once.</div>
+                        <div class="param-example">e.g. currency=USD&amp;currency=GBP</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">date</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Target date in YYYY-MM-DD format. Returns all events for that calendar day.</div>
+                        <div class="param-example">e.g. date=2026-03-30</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">REQUIRED HEADERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>HEADER</th><th>VALUE</th><th>REQUIRED</th><th>NOTES</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">X-API-Key</span></td>
+                      <td><span class="param-type">sk-…</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td><span class="param-desc">Your API key. Alternatively pass as <code style="color:var(--amber);font-family:var(--mono)">?api_key=sk-…</code> query parameter.</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">CURL EXAMPLE</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">SHELL</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'curl-ff')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="curl-ff">curl -X GET \
+  "http://localhost:8000/forexfactory/events?currency=USD&date=2026-03-30" \
+  -H "X-API-Key: sk-your-api-key-here"</pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE RESPONSE — 200 OK</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">JSON</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'resp-ff')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="resp-ff-raw" style="display:none">{
+    "date": "2026-03-30",
+    "timezone": "UTC",
+    "currencies": ["USD"],
+    "events": [
+        {
+            "time": "5:30pm",
+            "timezone": "UTC",
+            "currency": "USD",
+            "impact": "high",
+            "event": "Fed Chair Powell Speaks",
+            "actual": null,
+            "forecast": null,
+            "previous": null
+        },
+        {
+            "time": "11:00pm",
+            "timezone": "UTC",
+            "currency": "USD",
+            "impact": "low",
+            "event": "FOMC Member Williams Speaks",
+            "actual": null,
+            "forecast": null,
+            "previous": null
+        }
+    ],
+    "source": "forexfactory",
+    "cached": false
+}</pre>
+                <pre class="code-pre" id="resp-ff"></pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">RESPONSE FIELDS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>FIELD</th><th>TYPE</th><th>DESCRIPTION</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="param-name">date</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Echoed date from the request.</span></td></tr>
+                    <tr><td><span class="param-name">timezone</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Always UTC for ForexFactory responses.</span></td></tr>
+                    <tr><td><span class="param-name">currencies</span></td><td><span class="param-type">string[]</span></td><td><span class="param-desc">List of currency codes that were requested.</span></td></tr>
+                    <tr><td><span class="param-name">events[].time</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Scheduled time as shown on ForexFactory (e.g. 5:30pm).</span></td></tr>
+                    <tr><td><span class="param-name">events[].currency</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">ISO 4217 code for the event's country/currency.</span></td></tr>
+                    <tr><td><span class="param-name">events[].impact</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Market impact: <code style="color:var(--green);font-family:var(--mono)">low</code> | <code style="color:var(--amber);font-family:var(--mono)">medium</code> | <code style="color:var(--red);font-family:var(--mono)">high</code>.</span></td></tr>
+                    <tr><td><span class="param-name">events[].actual</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Released figure. null if not yet published.</span></td></tr>
+                    <tr><td><span class="param-name">events[].forecast</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Consensus estimate. null if not available.</span></td></tr>
+                    <tr><td><span class="param-name">events[].previous</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Prior period figure. null if not available.</span></td></tr>
+                    <tr><td><span class="param-name">cached</span></td><td><span class="param-type">boolean</span></td><td><span class="param-desc">true if this response was served from the 30-minute cache.</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <!-- 3. Broker Spreads Live                                           -->
+      <!-- ──────────────────────────────────────────────────────────────── -->
+      <div class="doc-item" id="doc-broker">
+        <div class="doc-header" onclick="toggleDoc('doc-broker')">
+          <span class="method-badge get">GET</span>
+          <span class="doc-header-path">/broker-spreads/live</span>
+          <span class="doc-header-desc">LIVE BROKER SPREADS — FOREXFACTORY</span>
+          <span class="doc-chevron">
+            <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <div class="doc-body">
+          <div class="doc-body-inner">
+
+            <div class="doc-section">
+              <div class="doc-section-label">DESCRIPTION</div>
+              <p class="doc-desc">Returns live spread and commission data for one or more brokers and trading symbols, scraped in real time from the ForexFactory broker guide. Broker names are matched case-insensitively by substring — so <code style="color:var(--amber);font-family:var(--mono)">HFM</code>, <code style="color:var(--amber);font-family:var(--mono)">hfm</code>, and <code style="color:var(--amber);font-family:var(--mono)">HF Markets</code> all resolve to the same broker row. Symbols accept slash or no-slash: <code style="color:var(--amber);font-family:var(--mono)">EUR/USD</code> and <code style="color:var(--amber);font-family:var(--mono)">EURUSD</code> are equivalent. Responses are cached for 5 minutes.</p>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE REQUEST URL</div>
+              <div class="doc-url-block">
+                <span class="doc-url-text">
+                  <span class="url-path">http://localhost:8000/broker-spreads/live</span><span class="url-query">?broker=HFM&amp;symbol=EUR/USD&amp;symbol=USD/JPY</span>
+                </span>
+                <button class="doc-copy-btn" onclick="copyUrl(this, 'http://localhost:8000/broker-spreads/live?broker=HFM&symbol=EUR/USD&symbol=USD/JPY')">⎘ COPY</button>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">QUERY PARAMETERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr>
+                      <th>PARAMETER</th>
+                      <th>TYPE</th>
+                      <th>REQUIRED</th>
+                      <th>DESCRIPTION &amp; EXAMPLE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">broker</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Broker name. Case-insensitive substring match against the ForexFactory broker list. Repeat to compare multiple brokers side by side.</div>
+                        <div class="param-example">e.g. broker=HFM&amp;broker=ICMarkets</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><span class="param-name">symbol</span><span class="param-multi">MULTI</span></td>
+                      <td><span class="param-type">string</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td>
+                        <div class="param-desc">Trading symbol. Both slash and no-slash formats are accepted. Repeat for multiple symbols.</div>
+                        <div class="param-example">e.g. symbol=EUR/USD&amp;symbol=USDJPY</div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">REQUIRED HEADERS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>HEADER</th><th>VALUE</th><th>REQUIRED</th><th>NOTES</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="param-name">X-API-Key</span></td>
+                      <td><span class="param-type">sk-…</span></td>
+                      <td><span class="param-req yes">YES</span></td>
+                      <td><span class="param-desc">Your API key. Alternatively pass as <code style="color:var(--amber);font-family:var(--mono)">?api_key=sk-…</code> query parameter.</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">CURL EXAMPLE</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">SHELL</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'curl-broker')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="curl-broker">curl -X GET \
+  "http://localhost:8000/broker-spreads/live?broker=HFM&symbol=EUR/USD&symbol=USD/JPY" \
+  -H "X-API-Key: sk-your-api-key-here"</pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">EXAMPLE RESPONSE — 200 OK</div>
+              <div class="code-wrap">
+                <div class="code-bar">
+                  <span class="code-lang">JSON</span>
+                  <button class="code-copy-btn" onclick="copyCode(this, 'resp-broker')">⎘ COPY</button>
+                </div>
+                <pre class="code-pre" id="resp-broker-raw" style="display:none">{
+    "brokers": [
+        {
+            "broker": "HFM",
+            "symbols": [
+                {
+                    "symbol": "EUR/USD",
+                    "spread": "0.0",
+                    "commission": "+$3",
+                    "quality": null
+                },
+                {
+                    "symbol": "USD/JPY",
+                    "spread": "0.4",
+                    "commission": "+$3",
+                    "quality": null
+                }
+            ],
+            "scraped_at": "2026-04-01T11:14:28Z"
+        }
+    ],
+    "symbols": ["EUR/USD", "USD/JPY"],
+    "source": "forexfactory-broker-spreads",
+    "cached": true
+}</pre>
+                <pre class="code-pre" id="resp-broker"></pre>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <div class="doc-section-label">RESPONSE FIELDS</div>
+              <div class="table-wrap">
+                <table class="param-table">
+                  <thead>
+                    <tr><th>FIELD</th><th>TYPE</th><th>DESCRIPTION</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="param-name">brokers[].broker</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Broker display name as shown on ForexFactory.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].symbol</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">Normalised trading symbol (e.g. EUR/USD).</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].spread</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Current live spread in pips as a string.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].commission</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">Per-lot commission (e.g. +$3). Empty string means no commission.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].symbols[].quality</span></td><td><span class="param-type">string | null</span></td><td><span class="param-desc">MyFxBook relative quality rating: <code style="color:var(--green);font-family:var(--mono)">good</code> | <code style="color:var(--red);font-family:var(--mono)">bad</code> | null.</span></td></tr>
+                    <tr><td><span class="param-name">brokers[].scraped_at</span></td><td><span class="param-type">string</span></td><td><span class="param-desc">ISO 8601 UTC timestamp of when the data was fetched from the source.</span></td></tr>
+                    <tr><td><span class="param-name">symbols</span></td><td><span class="param-type">string[]</span></td><td><span class="param-desc">Normalised list of symbols that were requested.</span></td></tr>
+                    <tr><td><span class="param-name">cached</span></td><td><span class="param-type">boolean</span></td><td><span class="param-desc">true if this response was served from the 5-minute cache.</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.doc-list -->
+
+  </div><!-- /.main -->
+</div><!-- /#dashboard-page -->
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <!--  MODAL                                                                 -->
@@ -786,6 +1588,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('username').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('password').focus();
   });
+
+  // Render syntax-highlighted JSON into doc response blocks
+  renderDocResponses();
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────── //
@@ -830,28 +1635,22 @@ function showLoginError(msg) {
 }
 
 function logout() {
-  clearInterval(_refreshId);
   _jwt = null;
   sessionStorage.removeItem('fxm_jwt');
+  clearInterval(_refreshId);
   showLogin();
 }
 
-// ── Page transitions ──────────────────────────────────────────────────── //
+// ── Page switching ─────────────────────────────────────────────────────── //
 function showLogin() {
-  document.getElementById('dashboard-page').hidden = true;
   document.getElementById('login-page').hidden = false;
-  document.getElementById('login-error').hidden = true;
-  document.getElementById('username').value = '';
-  document.getElementById('password').value = '';
-  document.getElementById('login-btn').disabled = false;
-  document.getElementById('login-btn').textContent = 'AUTHENTICATE';
+  document.getElementById('dashboard-page').hidden = true;
 }
 
 function showDashboard() {
   document.getElementById('login-page').hidden = true;
   document.getElementById('dashboard-page').hidden = false;
   loadAll();
-  clearInterval(_refreshId);
   _refreshId = setInterval(loadAll, REFRESH_MS);
 }
 
@@ -860,25 +1659,21 @@ async function apiFetch(path, opts = {}) {
   const res = await fetch(path, {
     ...opts,
     headers: {
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${_jwt}`,
+      'Content-Type': 'application/json',
       ...(opts.headers || {}),
     },
   });
-  if (res.status === 401) {
-    logout();
-    throw new Error('Session expired – please log in again.');
-  }
   const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || data.error || 'Request failed');
+  if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
   return data;
 }
 
-// ── Load everything ───────────────────────────────────────────────────── //
+// ── Load all data ─────────────────────────────────────────────────────── //
 async function loadAll() {
-  await Promise.allSettled([loadStats(), loadKeys()]);
   document.getElementById('last-updated').textContent =
-    'UPDATED ' + new Date().toLocaleTimeString([], { hour12: false });
+    'UPDATED ' + new Date().toLocaleTimeString();
+  await Promise.allSettled([loadStats(), loadKeys()]);
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────── //
@@ -895,18 +1690,16 @@ async function loadStats() {
   }
 }
 
-function statusClass(total, success, serverErrors) {
-  // Card accent colour is based on server error rate only.
-  // Client errors (bad params) are the caller's fault, not ours.
-  if (total === 0) return 'info';
-  const serverRate = serverErrors / total;
-  if (serverRate === 0)    return 'ok';
-  if (serverRate <= 0.05)  return 'warn';
+function statusClass(total, success, serverErr) {
+  if (total === 0) return '';
+  const rate = success / total;
+  if (rate >= 0.95) return 'ok';
+  if (rate >= 0.7 || serverErr === 0) return 'warn';
   return 'error';
 }
 
 function successRate(total, success) {
-  if (total === 0) return '—';
+  if (total === 0) return 'NO DATA';
   return Math.round((success / total) * 100) + '%';
 }
 
@@ -937,8 +1730,6 @@ function renderCards(stats) {
     const width  = rate;
     const last   = timeAgo(s.last_called);
 
-    // Progress bar shows success vs everything else
-    // Client errors get amber slice, server errors get red slice
     const clientPct = s.total > 0 ? Math.round((clientErr / s.total) * 100) : 0;
     const serverPct = s.total > 0 ? Math.round((serverErr / s.total) * 100) : 0;
 
@@ -1114,7 +1905,6 @@ function copyKey() {
 function showModal(html) {
   document.getElementById('modal-box').innerHTML = html;
   document.getElementById('modal-overlay').hidden = false;
-  // Auto-focus first input
   setTimeout(() => {
     const first = document.querySelector('#modal-box input');
     if (first) first.focus();
@@ -1151,6 +1941,100 @@ function escHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  API DOCUMENTATION — accordion + syntax highlighting
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── Toggle doc accordion items ────────────────────────────────────────── //
+function toggleDoc(id) {
+  const item = document.getElementById(id);
+  if (!item) return;
+  const wasOpen = item.classList.contains('open');
+
+  // Close all other open items
+  document.querySelectorAll('.doc-item.open').forEach(el => {
+    if (el.id !== id) el.classList.remove('open');
+  });
+
+  // Toggle the clicked item
+  item.classList.toggle('open', !wasOpen);
+}
+
+// ── JSON syntax highlighter ───────────────────────────────────────────── //
+// Tokenises a JSON string and wraps tokens in <span> tags with CSS classes.
+// Handles nested objects/arrays, strings, numbers, booleans, and null.
+function highlightJson(raw) {
+  // Tokenise via a regex that matches the distinct JSON value types
+  return raw.replace(
+    /("(?:[^"\\]|\\.)*")(\s*:\s*)|("(?:[^"\\]|\\.)*")|(true|false)|(null)|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}\[\],])/g,
+    (match, key, colon, strVal, bool, nil, num, punct) => {
+      if (key !== undefined) {
+        // Object key  (includes the colon+space after it)
+        return `<span class="jt-key">${escHtml(key)}</span>${colon}`;
+      }
+      if (strVal !== undefined) {
+        return `<span class="jt-str">${escHtml(strVal)}</span>`;
+      }
+      if (bool !== undefined) {
+        return `<span class="jt-bool">${bool}</span>`;
+      }
+      if (nil !== undefined) {
+        return `<span class="jt-null">null</span>`;
+      }
+      if (num !== undefined) {
+        return `<span class="jt-num">${num}</span>`;
+      }
+      if (punct !== undefined) {
+        return `<span class="jt-brace">${escHtml(punct)}</span>`;
+      }
+      return match;
+    }
+  );
+}
+
+// Pairs: [rawSourceId, highlightedTargetId]
+const DOC_RESPONSE_PAIRS = [
+  ['resp-myfxbook-raw', 'resp-myfxbook'],
+  ['resp-ff-raw',       'resp-ff'],
+  ['resp-broker-raw',   'resp-broker'],
+];
+
+function renderDocResponses() {
+  DOC_RESPONSE_PAIRS.forEach(([srcId, tgtId]) => {
+    const src = document.getElementById(srcId);
+    const tgt = document.getElementById(tgtId);
+    if (!src || !tgt) return;
+    tgt.innerHTML = highlightJson(src.textContent);
+  });
+}
+
+// ── Copy URL button ───────────────────────────────────────────────────── //
+function copyUrl(btn, url) {
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '✓ COPIED';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '⎘ COPY';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => toast('Copy failed.', 'error'));
+}
+
+// ── Copy code block button ────────────────────────────────────────────── //
+function copyCode(btn, preId) {
+  const pre = document.getElementById(preId);
+  if (!pre) return;
+  const text = pre.innerText || pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ COPIED';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '⎘ COPY';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => toast('Copy failed.', 'error'));
 }
 </script>
 </body>
