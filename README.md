@@ -1,145 +1,79 @@
-follow this gemin link on josephgathithi@gmail.com : https://gemini.google.com/app/ff2a71f3025a5ef8
+# Forex News Scraper (forex-api)
 
+A FastAPI service that scrapes the ForexFactory and MyFxBook economic calendars and live broker spreads with Playwright, caches the results, and serves them over an API-key-protected, rate-limited REST API. My MT5 trading bots query it before opening trades around high-impact news.
 
-for the scraping tool in claude: in the tana email:  https://claude.ai/chat/846067e2-4b0c-49ba-86b1-fbe589f3f86d
+## Features
 
+- **Economic calendars:** ForexFactory and MyFxBook events filtered by currency and date, with impact, actual, forecast and previous values.
+- **Broker spreads:** live spreads by broker and symbol.
+- **API keys:** created from a dashboard, stored encrypted (via my [`securepipe`](https://pypi.org/project/securepipe/) library, with a Fernet fallback), each with its own per-minute rate limit.
+- **Dashboard:** JWT login with login rate limiting, request stats, and key management.
+- **Persistent browser:** one Chromium instance reused across requests, with recovery when a page crashes.
+- **Caching:** in-memory TTL cache (broker spreads: 5 minutes) and SQLite request logs with retention cleanup.
 
+## Endpoints
 
-Here’s a clean and professional `README.md` you can use 👇
+All data endpoints need an API key in the `X-API-Key` header.
 
----
+| Method | Path | Query parameters |
+|---|---|---|
+| GET | `/forexfactory/events` | `currency` (repeatable), `date` |
+| GET | `/myfxbook/events` | `currency` (repeatable), `start_date`, `end_date` |
+| GET | `/broker-spreads/live` | `broker` (repeatable), `symbol` (repeatable) |
+| GET | `/broker-spreads/all` | `symbol` (repeatable) |
+| GET | `/health` | — |
 
-````markdown
-# Forex News Scraper
-
-This project uses **FastAPI + Playwright** to scrape forex news data.
-
----
-
-## 🚀 Setup Guide
-
-Follow the steps below to get the project running locally.
-
----
-
-## 1. 📦 Create Virtual Environment
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-````
-
----
-
-## 2. 📥 Install Python Dependencies
+Dashboard routes: `/` (dashboard), `/api-docs`, `POST /auth/login`, and `/api/dashboard/stats` and `/api/dashboard/keys` (Bearer token from login). Example responses are in [`API_DOC.md`](API_DOC.md).
 
 ```bash
-pip install -r requirements.txt
+curl -H "X-API-Key: <your key>" \
+  "http://localhost:8087/myfxbook/events?currency=USD&start_date=2026-03-10&end_date=2026-03-11"
 ```
 
----
+## Configuration
 
-## 3. 🌐 Install Playwright Browsers
+| Variable | Purpose |
+|---|---|
+| `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD` | Dashboard login |
+| `JWT_SECRET` | Signs dashboard login tokens |
+| `ENCRYPTION_KEY` | Encrypts stored API keys |
+| `JWT_EXPIRY_HOURS` | Dashboard token lifetime (default 24) |
+| `LOG_RETENTION_DAYS` | Request-log retention (default 3) |
+| `LOGIN_RATE_LIMIT`, `LOGIN_RATE_WINDOW` | Login attempt limit |
+| `DATA_DIR`, `LOGS_DIR` | SQLite and log locations |
+
+Generate `JWT_SECRET` and `ENCRYPTION_KEY` with `python generate_secrets.py`. Never use the placeholder defaults in `docker-compose.yml` outside local testing.
+
+## Running
+
+### Docker
 
 ```bash
-playwright install chromium
+docker compose up -d --build
+# API and dashboard: http://localhost:8087
 ```
 
----
-
-## 4. ⚙️ Install System Dependencies (Ubuntu / WSL)
-
-If you're using **Ubuntu 24.04 / WSL**, install the required system libraries:
+### Local (tested on Ubuntu 24.04 / WSL, Python 3.12)
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y \
-    libnss3 \
-    libnspr4 \
-    libasound2t64 \
-    libatk1.0-0t64 \
-    libatk-bridge2.0-0t64 \
-    libcups2t64 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
-    libxshmfence1 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libatspi2.0-0t64 \
-    libgtk-3-0t64
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt PyJWT   # PyJWT is needed by main.py but missing from requirements.txt
+playwright install --with-deps chromium
+python main.py                          # serves on http://localhost:8000
 ```
 
----
+If Chromium fails to start on Ubuntu 24.04, install its system libraries (`libnss3`, `libasound2t64`, `libgbm1`, `libgtk-3-0t64` and others); `playwright install --with-deps` does this for you.
 
-## 5. 🔧 Install Additional Required Libraries
+## Deployment
 
-```bash
-sudo apt-get install -y libicu-dev libffi-dev libx264-dev
-```
+`.github/workflows/deploy.yml` runs on a self-hosted runner: it syncs the repo to the server and rebuilds the container with `docker compose`.
 
----
+## Limitations
 
-## 6. ▶️ Run the Application
+- No automated tests.
+- Scraping depends on each site's page structure and may break when it changes; check each site's terms of use before relying on it.
+- The trading bots expect a shared Docker network named `forex-shared`, which this compose file does not create.
 
-```bash
-python main.py
-```
-
----
-
-## 🧠 Why These Steps Are Needed
-
-Playwright runs a real browser (**Chromium**) under the hood.
-Unlike typical Python libraries, this requires **system-level dependencies** (graphics, fonts, audio, etc.).
-
-On **Ubuntu 24.04**, many packages were renamed (e.g., `libasound2 → libasound2t64`), which can cause installation failures if not handled correctly.
-
----
-
-## ✅ Expected Result
-
-After setup, the server should start successfully:
-
-```
-INFO:     Started server process
-INFO:     Waiting for application startup.
-```
-
----
-
-## ⚠️ Troubleshooting
-
-* If Playwright fails → ensure all system dependencies are installed
-* If `playwright` command not found → activate your virtual environment
-* If still failing → reinstall browsers:
-
-```bash
-playwright install --force
-```
-
----
-
-## 📌 Notes
-
-* Tested on **Ubuntu 24.04 (WSL)**
-* Python version: **3.12**
-
----
-
-## 👨‍💻 Author
+## Author
 
 Joseph Wathome
-
-```
-
----
-
-If you want, I can also:
-- Add Docker setup
-- Add API usage examples
-- Clean it for GitHub (badges, structure, etc.)
-```
